@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1F4E79">
-    <title>Mi Finanzas Pro - Freddy Farinango</title>
+    <title>Mi Finanzas Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -16,7 +16,8 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
-        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 1.5rem; letter-spacing: 1px; }
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
@@ -45,7 +46,7 @@
 <div id="lock-screen" style="position: fixed; inset: 0; background: #1F4E79; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px;">
     <div style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; color: #333; text-align: center;">
         <h2 style="color: #1F4E79; margin-bottom: 10px;">Acceso Seguro</h2>
-        <input type="password" id="pin-input" placeholder="Clave" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
+        <input type="password" id="pin-input" placeholder="Clave de Acceso" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
         <button onclick="validarPin()" style="width: 100%; padding: 15px; background: #1F4E79; color: white; border: none; border-radius: 10px; font-weight: bold;">ACTIVAR</button>
         <p id="error-msg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Clave incorrecta.</p>
     </div>
@@ -53,13 +54,10 @@
 
 <div class="header">
     <h1>MI FINANZAS PRO</h1>
-    <p>Freddy Farinango - Contador Público</p>
 </div>
 
 <div id="scr-home" class="screen active">
-    <!-- BOTÓN DE INSTALACIÓN RESTAURADO -->
-    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APP</button>
-    
+    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APLICACIÓN</button>
     <div class="kpi-grid">
         <div class="kpi-card" style="border-top-color:var(--accent)"><div>Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--danger)"><div>Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
@@ -74,11 +72,11 @@
 <div id="scr-add" class="screen">
     <div class="card">
         <input type="hidden" id="edit-index" value="-1">
-        <div class="form-group"><label>Tercero</label><input type="text" id="ter" placeholder="Nombre"></div>
-        <div class="form-group"><label>NIT / CC</label><input type="text" id="nit" placeholder="Documento"></div>
-        <div class="form-group"><label>Concepto</label><input type="text" id="desc" placeholder="Detalle"></div>
-        <div class="form-group"><label>Monto</label><input type="number" id="amt" placeholder="0"></div>
-        <div class="form-group"><label>Tipo</label>
+        <div class="form-group"><label>Tercero / Cliente</label><input type="text" id="ter" placeholder="Nombre completo"></div>
+        <div class="form-group"><label>Identificación</label><input type="text" id="nit" placeholder="NIT o Cédula"></div>
+        <div class="form-group"><label>Concepto</label><input type="text" id="desc" placeholder="Detalle del movimiento"></div>
+        <div class="form-group"><label>Monto</label><input type="number" id="amt" placeholder="Valor en pesos"></div>
+        <div class="form-group"><label>Tipo de Operación</label>
             <select id="type">
                 <option value="in">Ingreso (+)</option>
                 <option value="out">Gasto (-)</option>
@@ -92,8 +90,8 @@
 <div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
 
 <div id="scr-rec" class="screen">
-    <div class="receipt-box" id="rec-box"><p style="text-align:center; color:#888;">Sin recibos.</p></div>
-    <button onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir Soporte</button>
+    <div class="receipt-box" id="rec-box"><p style="text-align:center; color:#888;">Sin registros recientes.</p></div>
+    <button onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir Comprobante</button>
 </div>
 
 <nav class="bottom-nav">
@@ -104,12 +102,21 @@
 </nav>
 
 <script>
+    // --- CONTROL DE ACTUALIZACIONES ---
+    const VERSION_APP = "2.2"; 
+    function checkUpdate() {
+        if(localStorage.getItem('app_v') !== VERSION_APP) {
+            // No borramos la base de datos de registros, solo notificamos cambio
+            localStorage.setItem('app_v', VERSION_APP);
+            console.log("Nueva versión cargada: " + VERSION_APP);
+        }
+    }
+    checkUpdate();
+
     let deferredPrompt;
     const btnInstalar = document.getElementById('btn-instalar-manual');
-    
     window.addEventListener('beforeinstallprompt', (e) => { 
-        e.preventDefault(); 
-        deferredPrompt = e; 
+        e.preventDefault(); deferredPrompt = e; 
         if (localStorage.getItem('app_act_v11') === 'true') btnInstalar.style.display = 'block'; 
     });
 
@@ -146,8 +153,10 @@
     function saveData() {
         const idx = document.getElementById('edit-index').value;
         const entry = { ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), type: document.getElementById('type').value, date: idx === "-1" ? new Date().toLocaleString() : db[idx].date };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Datos incompletos");
+        if(!entry.ter || isNaN(entry.amt)) return alert("Por favor complete los campos obligatorios");
+        
         if(idx === "-1") db.push(entry); else { db[idx] = entry; document.getElementById('edit-index').value = "-1"; document.getElementById('btn-save').innerText = "✅ Guardar Registro"; }
+        
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
     }
@@ -175,7 +184,7 @@
 
     function renderHist() {
         const list = document.getElementById('hist-list');
-        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos.</p>";
+        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos registrados.</p>";
         db.slice().reverse().forEach((d, index) => {
             const actualIndex = db.length - 1 - index;
             const color = d.type=='in'?'var(--accent)':(d.type=='out'?'var(--danger)':'var(--warning)');
@@ -183,18 +192,18 @@
         });
     }
 
-    function deleteItem(index) { if(confirm("¿Borrar registro?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
+    function deleteItem(index) { if(confirm("¿Seguro que desea eliminar este registro?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
 
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
         if (db.length === 0) return;
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000; margin-bottom:10px;">COMPROBANTE</h3><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><p><b>NIT/CC:</b> ${last.nit}</p><p><b>DETALLE:</b> ${last.desc}</p><hr style="border:1px dashed #ccc; margin:10px 0;"><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000; margin-bottom:10px;">MI FINANZAS PRO</h3><p style="text-align:center; font-size:0.8rem; margin-bottom:15px;">Soporte Contable Digital</p><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><p><b>IDENTIFICACIÓN:</b> ${last.nit}</p><p><b>DETALLE:</b> ${last.desc}</p><hr style="border:1px dashed #ccc; margin:10px 0;"><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
     }
 
     function exportarExcelPro() {
         if (db.length === 0) return alert("No hay datos para exportar");
-        const titulo = "MI FINANZAS PRO - REPORTE CONTABLE DE FREDDY FARINANGO\n";
+        const titulo = "MI FINANZAS PRO - REPORTE GENERAL DE MOVIMIENTOS\n";
         const subtitulo = "Generado el: " + new Date().toLocaleString() + "\n\n";
         const columnas = "FECHA;TERCERO;IDENTIFICACION;CONCEPTO;TIPO;MONTO\n";
         const filas = db.map(i => {
@@ -204,7 +213,7 @@
         const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Freddy_Contable.csv";
+        link.download = "Reporte_Finanzas_Pro.csv";
         link.click();
     }
 
