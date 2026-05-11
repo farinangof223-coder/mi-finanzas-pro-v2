@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1F4E79">
     <title>Mi Finanzas Pro - Freddy Farinango</title>
-    
-    <!-- AJUSTE DE RUTAS PARA GITHUB PAGES -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -14,7 +12,7 @@
     <style>
         :root {
             --primary: #1F4E79; --secondary: #2E75B6; --accent: #70AD47;
-            --danger: #C00000; --light: #F2F2F2; --white: #FFFFFF; --shadow: 0 2px 8px rgba(0,0,0,0.15);
+            --danger: #C00000; --warning: #f1c40f; --light: #F2F2F2; --white: #FFFFFF; --shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
@@ -34,6 +32,8 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; font-size: 1rem; }
         .btn-primary { background: var(--primary); }
         .btn-excel { background: #1D6F42; }
+        .btn-install { background: #FF5722; display: none; border: 2px solid #fff; animation: pulse 2s infinite; margin-bottom: 15px; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .btn-delete { background: #ffebee; color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 5px; }
         .btn-edit { background: #e3f2fd; color: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
@@ -57,6 +57,9 @@
 </div>
 
 <div id="scr-home" class="screen active">
+    <!-- BOTÓN DE INSTALACIÓN RESTAURADO -->
+    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APP</button>
+    
     <div class="kpi-grid">
         <div class="kpi-card" style="border-top-color:var(--accent)"><div>Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--danger)"><div>Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
@@ -101,6 +104,24 @@
 </nav>
 
 <script>
+    let deferredPrompt;
+    const btnInstalar = document.getElementById('btn-instalar-manual');
+    
+    window.addEventListener('beforeinstallprompt', (e) => { 
+        e.preventDefault(); 
+        deferredPrompt = e; 
+        if (localStorage.getItem('app_act_v11') === 'true') btnInstalar.style.display = 'block'; 
+    });
+
+    btnInstalar.addEventListener('click', async () => { 
+        if (deferredPrompt) { 
+            deferredPrompt.prompt(); 
+            const { outcome } = await deferredPrompt.userChoice; 
+            if (outcome === 'accepted') btnInstalar.style.display = 'none'; 
+            deferredPrompt = null; 
+        } 
+    });
+
     const CLAVE_MAESTRA = "FREDDY2026"; 
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
 
@@ -108,6 +129,7 @@
         if (document.getElementById('pin-input').value === CLAVE_MAESTRA) {
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
+            if (deferredPrompt) btnInstalar.style.display = 'block';
         } else { document.getElementById('error-msg').style.display = 'block'; }
     }
 
@@ -188,7 +210,12 @@
 
     function limpiarForm() { document.getElementById('ter').value = ""; document.getElementById('nit').value = ""; document.getElementById('desc').value = ""; document.getElementById('amt').value = ""; document.getElementById('edit-index').value = "-1"; }
 
-    window.onload = function() { if (localStorage.getItem('app_act_v11') === 'true') document.getElementById('lock-screen').style.display = 'none'; updateUI(); }
+    window.onload = function() { 
+        if (localStorage.getItem('app_act_v11') === 'true') {
+            document.getElementById('lock-screen').style.display = 'none';
+        }
+        updateUI(); 
+    }
 </script>
 </body>
 </html>
