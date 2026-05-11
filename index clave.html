@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1F4E79">
+    <title>Mi Finanzas Pro - Freddy Farinango</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #1F4E79; --secondary: #2E75B6; --accent: #70AD47;
+            --danger: #C00000; --light: #F2F2F2; --white: #FFFFFF; --shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
+        .nav-item.active { color: var(--primary); }
+        .screen { display: none; padding: 16px; max-width: 500px; margin: 0 auto; }
+        .screen.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .kpi-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); border-top: 4px solid var(--primary); }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; font-size: 1rem; }
+        .btn-primary { background: var(--primary); }
+        .btn-excel { background: #1D6F42; }
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-delete { background: #ffebee; color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 5px; }
+        .btn-edit { background: #e3f2fd; color: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+        .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div id="lock-screen" style="position: fixed; inset: 0; background: #1F4E79; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px;">
+    <div style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; color: #333; text-align: center;">
+        <h2 style="color: #1F4E79; margin-bottom: 10px;">Acceso Seguro</h2>
+        <input type="password" id="pin-input" placeholder="Clave" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
+        <button onclick="validarPin()" style="width: 100%; padding: 15px; background: #1F4E79; color: white; border: none; border-radius: 10px; font-weight: bold;">ACTIVAR</button>
+        <p id="error-msg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Clave incorrecta.</p>
+    </div>
+</div>
+
+<div class="header">
+    <h1>MI FINANZAS PRO</h1>
+    <p>Freddy Farinango - Contador Público</p>
+</div>
+
+<div id="scr-home" class="screen active">
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-top-color:var(--accent)"><div>Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--danger)"><div>Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
+    </div>
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-top-color:#f1c40f"><div>Deudas</div><div id="res-deuda" style="color:#f1c40f; font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--primary)"><div>Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
+    </div>
+    <button onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
+</div>
+
+<div id="scr-add" class="screen">
+    <div class="card">
+        <input type="hidden" id="edit-index" value="-1">
+        <div class="form-group"><label>Tercero</label><input type="text" id="ter" placeholder="Nombre"></div>
+        <div class="form-group"><label>NIT / CC</label><input type="text" id="nit" placeholder="Documento"></div>
+        <div class="form-group"><label>Concepto</label><input type="text" id="desc" placeholder="Detalle"></div>
+        <div class="form-group"><label>Monto</label><input type="number" id="amt" placeholder="0"></div>
+        <div class="form-group"><label>Tipo</label>
+            <select id="type">
+                <option value="in">Ingreso (+)</option>
+                <option value="out">Gasto (-)</option>
+                <option value="deu">Deuda (Pendiente)</option>
+            </select>
+        </div>
+        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar Registro</button>
+    </div>
+</div>
+
+<div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
+
+<div id="scr-rec" class="screen">
+    <div class="receipt-box" id="rec-box"><p style="text-align:center; color:#888;">Sin recibos.</p></div>
+    <button onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir Soporte</button>
+</div>
+
+<nav class="bottom-nav">
+    <button class="nav-item active" onclick="nav('scr-home', this)">🏠<br>Inicio</button>
+    <button class="nav-item" onclick="nav('scr-add', this)">➕<br>Nuevo</button>
+    <button class="nav-item" onclick="nav('scr-hist', this)">📜<br>Historial</button>
+    <button class="nav-item" onclick="nav('scr-rec', this)">📑<br>Recibo</button>
+</nav>
+
+<script>
+    const CLAVE_MAESTRA = "FREDDY2026"; 
+    let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
+
+    function validarPin() {
+        if (document.getElementById('pin-input').value === CLAVE_MAESTRA) {
+            document.getElementById('lock-screen').style.display = 'none';
+            localStorage.setItem('app_act_v11', 'true');
+        } else { document.getElementById('error-msg').style.display = 'block'; }
+    }
+
+    function nav(id, el) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(el) el.classList.add('active');
+        if(id === 'scr-hist') renderHist();
+        if(id === 'scr-rec') renderLastReceipt();
+        updateUI();
+    }
+
+    function saveData() {
+        const idx = document.getElementById('edit-index').value;
+        const entry = { ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), type: document.getElementById('type').value, date: idx === "-1" ? new Date().toLocaleString() : db[idx].date };
+        if(!entry.ter || isNaN(entry.amt)) return alert("Datos incompletos");
+        if(idx === "-1") db.push(entry); else { db[idx] = entry; document.getElementById('edit-index').value = "-1"; document.getElementById('btn-save').innerText = "✅ Guardar Registro"; }
+        localStorage.setItem('freddy_db_v11', JSON.stringify(db));
+        updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
+    }
+
+    function editItem(index) {
+        const item = db[index];
+        document.getElementById('ter').value = item.ter;
+        document.getElementById('nit').value = item.nit;
+        document.getElementById('desc').value = item.desc;
+        document.getElementById('amt').value = item.amt;
+        document.getElementById('type').value = item.type;
+        document.getElementById('edit-index').value = index;
+        document.getElementById('btn-save').innerText = "🔄 Actualizar Registro";
+        nav('scr-add', document.querySelectorAll('.nav-item'));
+    }
+
+    function updateUI() {
+        let i = 0, g = 0, d = 0;
+        db.forEach(item => { if(item.type == 'in') i += item.amt; else if(item.type == 'out') g += item.amt; else d += item.amt; });
+        document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
+        document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
+        document.getElementById('res-deuda').innerText = "$ " + d.toLocaleString();
+        document.getElementById('res-net').innerText = "$ " + (i - g).toLocaleString();
+    }
+
+    function renderHist() {
+        const list = document.getElementById('hist-list');
+        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos.</p>";
+        db.slice().reverse().forEach((d, index) => {
+            const actualIndex = db.length - 1 - index;
+            const color = d.type=='in'?'var(--accent)':(d.type=='out'?'var(--danger)':'var(--warning)');
+            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">$${d.amt.toLocaleString()}</div><button class="btn-edit" onclick="editItem(${actualIndex})">Editar</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">Borrar</button></div></div>`;
+        });
+    }
+
+    function deleteItem(index) { if(confirm("¿Borrar registro?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
+
+    function renderLastReceipt() {
+        const box = document.getElementById('rec-box');
+        if (db.length === 0) return;
+        const last = db[db.length - 1];
+        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000; margin-bottom:10px;">COMPROBANTE</h3><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><p><b>NIT/CC:</b> ${last.nit}</p><p><b>DETALLE:</b> ${last.desc}</p><hr style="border:1px dashed #ccc; margin:10px 0;"><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+    }
+
+    function exportarExcelPro() {
+        if (db.length === 0) return alert("No hay datos para exportar");
+        const titulo = "MI FINANZAS PRO - REPORTE CONTABLE DE FREDDY FARINANGO\n";
+        const subtitulo = "Generado el: " + new Date().toLocaleString() + "\n\n";
+        const columnas = "FECHA;TERCERO;IDENTIFICACION;CONCEPTO;TIPO;MONTO\n";
+        const filas = db.map(i => {
+            return `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type === 'in' ? 'INGRESO' : (i.type === 'out' ? 'GASTO' : 'DEUDA')};${i.amt}`;
+        }).join("\n");
+        const contenido = "\ufeff" + titulo + subtitulo + columnas + filas;
+        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Reporte_Freddy_Contable.csv";
+        link.click();
+    }
+
+    function limpiarForm() { document.getElementById('ter').value = ""; document.getElementById('nit').value = ""; document.getElementById('desc').value = ""; document.getElementById('amt').value = ""; document.getElementById('edit-index').value = "-1"; }
+
+    window.onload = function() { if (localStorage.getItem('app_act_v11') === 'true') document.getElementById('lock-screen').style.display = 'none'; updateUI(); }
+</script>
+</body>
+</html>
