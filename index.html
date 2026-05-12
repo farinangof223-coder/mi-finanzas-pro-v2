@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-
     <style>
         :root {
             --primary: #1F4E79; --secondary: #2E75B6; --accent: #70AD47;
@@ -34,10 +33,9 @@
         .btn-primary { background: var(--primary); }
         .btn-excel { background: #1D6F42; }
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-edit { color: var(--secondary); background: none; border: none; font-size: 1.2rem; cursor: pointer; }
-        .btn-delete { color: var(--danger); background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 10px; }
-        .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
+        .btn-edit, .btn-delete { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
+        .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
     </style>
 </head>
 <body>
@@ -64,7 +62,7 @@
         <div class="kpi-card" style="border-top-color:#f1c40f"><div id="txt-kpi-deu">Deudas</div><div id="res-deuda" style="color:#f1c40f; font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--primary)"><div id="txt-kpi-net">Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
     </div>
-    <button id="txt-btn-excel" onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte</button>
+    <button id="txt-btn-excel" onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
 </div>
 
 <div id="scr-add" class="screen">
@@ -84,9 +82,9 @@
         </div>
         <div class="checkbox-group" id="abono-logic-container" style="display:none; align-items:center; gap:10px;">
             <input type="checkbox" id="chk-afectar-saldo">
-            <label id="lbl-afectar" style="font-size:0.8rem;">¿Descontar de saldo?</label>
+            <label id="lbl-afectar" style="font-size:0.8rem; cursor:pointer;">¿Descontar de saldo?</label>
         </div>
-        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar</button>
+        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar Registro</button>
     </div>
 </div>
 
@@ -115,14 +113,16 @@
             excel: "📊 Descargar Reporte Profesional", ter: "Tercero / Cliente", nit: "Identificación", des: "Concepto", amt: "Monto", typ: "Tipo",
             optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
             afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
-            home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos."
+            home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
+            date: "FECHA", client: "TERCERO", detail: "CONCEPTO", type: "TIPO", amount: "MONTO"
         },
         en: {
             title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
             excel: "📊 Download Professional Report", ter: "Client / Third Party", nit: "ID Number", des: "Concept", amt: "Amount", typ: "Type",
             optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
             afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
-            home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data."
+            home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
+            date: "DATE", client: "CLIENT", detail: "DETAIL", type: "TYPE", amount: "AMOUNT"
         }
     };
 
@@ -170,7 +170,7 @@
         if (document.getElementById('pin-input').value === CLAVE_MAESTRA) {
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
-        } else { alert("Error"); }
+        } else { alert("PIN Incorrecto"); }
     }
 
     function nav(id, el) {
@@ -191,7 +191,7 @@
             type: document.getElementById('type').value, afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete");
+        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete Data");
         if(idx === "-1") db.push(entry); else db[idx] = entry;
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
@@ -240,12 +240,19 @@
         const box = document.getElementById('rec-box');
         if (!db.length) return;
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center;">${translations[currentLang].title}</h3><p><b>CLIENT:</b> ${last.ter.toUpperCase()}</p><p><b>DETAIL:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">${translations[currentLang].title}</h3><p><b>${translations[currentLang].client}:</b> ${last.ter.toUpperCase()}</p><p><b>${translations[currentLang].detail}:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
     }
 
     function exportarExcelPro() {
-        const rows = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.desc.toUpperCase()};${i.type};${i.amt}`).join("\n");
-        const blob = new Blob(["\ufeffDATE;CLIENT;DETAIL;TYPE;AMOUNT\n" + rows], { type: 'text/csv;charset=utf-8;' });
+        const t = translations[currentLang];
+        const titulo = t.title + " - REPORT\n";
+        const subtitulo = "Generated: " + new Date().toLocaleString() + "\n\n";
+        // AJUSTE DE COLUMNAS PARA EXCEL (Punto y coma)
+        const columnas = `${t.date};${t.client};${t.detail};${t.type};${t.amount}\n`;
+        const filas = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
+        
+        const contenido = "\ufeff" + titulo + subtitulo + columnas + filas;
+        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "Report_Pro.csv";
