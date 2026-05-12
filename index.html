@@ -62,7 +62,7 @@
         <div class="kpi-card" style="border-top-color:var(--warning)"><div id="txt-kpi-deu">Deudas</div><div id="res-deuda" style="color:var(--warning); font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--primary)"><div id="txt-kpi-net">Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
     </div>
-    <button id="txt-btn-excel" onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
+    <button id="txt-btn-excel" onclick="exportarExcelFinal()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
 </div>
 
 <div id="scr-add" class="screen">
@@ -120,7 +120,7 @@
             optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
             sumar: "¿Sumar a los Ingresos Actuales?", afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
             home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
-            csvH: "FECHA;TERCERO;NIT;CONCEPTO;TIPO;MONTO"
+            date: "FECHA", client: "TERCERO", detail: "CONCEPTO", type: "TIPO", amount: "MONTO"
         },
         en: {
             title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
@@ -128,7 +128,7 @@
             optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
             sumar: "Add to Current Incomes?", afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
             home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
-            csvH: "DATE;CLIENT;ID;CONCEPT;TYPE;AMOUNT"
+            date: "DATE", client: "CLIENT", detail: "DETAIL", type: "TYPE", amount: "AMOUNT"
         }
     };
 
@@ -202,7 +202,7 @@
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Data Incomplete");
+        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete Data");
         if(idx === "-1") db.push(entry); else db[idx] = entry;
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
@@ -213,14 +213,8 @@
         db.forEach(item => { 
             if(item.type == 'in') i += item.amt; 
             else if(item.type == 'out') g += item.amt; 
-            else if(item.type == 'deu_up') {
-                d += item.amt;
-                if(item.sumarIngreso) i += item.amt;
-            }
-            else if(item.type == 'deu_down') {
-                d -= item.amt;
-                if(item.afectarSaldo) g += item.amt;
-            }
+            else if(item.type == 'deu_up') { d += item.amt; if(item.sumarIngreso) i += item.amt; }
+            else if(item.type == 'deu_down') { d -= item.amt; if(item.afectarSaldo) g += item.amt; }
         });
         document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
         document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
@@ -260,24 +254,37 @@
         const box = document.getElementById('rec-box');
         if (!db.length) return;
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">${translations[currentLang].title}</h3><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><p><b>IDENTIFICACIÓN:</b> ${last.nit}</p><p><b>DETALLE:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">${translations[currentLang].title}</h3><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
     }
 
-    function exportarExcelPro() {
+    // --- FUNCIÓN MAESTRA DE EXCEL (FORMATO TABLA HTML) ---
+    function exportarExcelFinal() {
         const t = translations[currentLang];
-        const titulo = t.title + " - REPORT\n";
-        const subtitulo = "Generated: " + new Date().toLocaleString() + "\n\n";
+        let table = `<table border="1">
+            <tr><th colspan="5" style="background:#1F4E79; color:white;">${t.title} - REPORTE OFICIAL</th></tr>
+            <tr>
+                <th style="background:#eee;">${t.date}</th>
+                <th style="background:#eee;">${t.client}</th>
+                <th style="background:#eee;">${t.detail}</th>
+                <th style="background:#eee;">${t.type}</th>
+                <th style="background:#eee;">${t.amount}</th>
+            </tr>`;
         
-        // CORRECCIÓN DEFINITIVA DE COLUMNAS: sep=; fuerza a Excel a reconocer el separador
-        const sepInstruccion = "sep=;\n";
-        const encabezados = t.csvH + "\n";
-        const filas = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
-        
-        const contenido = "\ufeff" + sepInstruccion + titulo + subtitulo + encabezados + filas;
-        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+        db.forEach(i => {
+            table += `<tr>
+                <td>${i.date}</td>
+                <td>${i.ter.toUpperCase()}</td>
+                <td>${i.desc.toUpperCase()}</td>
+                <td>${i.type.toUpperCase()}</td>
+                <td>${i.amt}</td>
+            </tr>`;
+        });
+        table += "</table>";
+
+        const blob = new Blob(['\ufeff', table], { type: 'application/vnd.ms-excel' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Farinango_Pro.csv";
+        link.download = "Reporte_Farinango_Pro.xls"; // Guardar como .xls
         link.click();
     }
 
@@ -298,4 +305,5 @@
 </script>
 </body>
 </html>
+
 
