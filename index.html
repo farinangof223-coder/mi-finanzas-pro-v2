@@ -81,7 +81,6 @@
             </select>
         </div>
         
-        <!-- Lógica Dinámica de Deudas -->
         <div class="checkbox-group" id="deuda-up-logic" style="display:none;">
             <input type="checkbox" id="chk-sumar-ingreso">
             <label id="lbl-sumar" style="font-size:0.8rem; cursor:pointer;">¿Sumar a los Ingresos Actuales?</label>
@@ -203,7 +202,7 @@
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete Data");
+        if(!entry.ter || isNaN(entry.amt)) return alert("Data Incomplete");
         if(idx === "-1") db.push(entry); else db[idx] = entry;
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
@@ -216,11 +215,11 @@
             else if(item.type == 'out') g += item.amt; 
             else if(item.type == 'deu_up') {
                 d += item.amt;
-                if(item.sumarIngreso) i += item.amt; // Si presta y marca check, sube el ingreso
+                if(item.sumarIngreso) i += item.amt;
             }
             else if(item.type == 'deu_down') {
                 d -= item.amt;
-                if(item.afectarSaldo) g += item.amt; // Si abona y marca check, sube el gasto
+                if(item.afectarSaldo) g += item.amt;
             }
         });
         document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
@@ -266,11 +265,19 @@
 
     function exportarExcelPro() {
         const t = translations[currentLang];
-        const rows = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
-        const blob = new Blob(["\ufeff" + t.csvH + "\n" + rows], { type: 'text/csv;charset=utf-8;' });
+        const titulo = t.title + " - REPORT\n";
+        const subtitulo = "Generated: " + new Date().toLocaleString() + "\n\n";
+        
+        // CORRECCIÓN DEFINITIVA DE COLUMNAS: sep=; fuerza a Excel a reconocer el separador
+        const sepInstruccion = "sep=;\n";
+        const encabezados = t.csvH + "\n";
+        const filas = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
+        
+        const contenido = "\ufeff" + sepInstruccion + titulo + subtitulo + encabezados + filas;
+        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Freddy_Pro.csv";
+        link.download = "Reporte_Farinango_Pro.csv";
         link.click();
     }
 
