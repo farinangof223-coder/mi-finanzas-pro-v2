@@ -17,7 +17,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
         .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-        .header h1 { font-size: 1.5rem; letter-spacing: 1px; }
+        .lang-switch { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
@@ -39,104 +39,112 @@
         .btn-delete { background: #ffebee; color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 5px; }
         .btn-edit { background: #e3f2fd; color: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
         .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
+        .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
+        .checkbox-group input { width: auto; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen" style="position: fixed; inset: 0; background: #1F4E79; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px;">
     <div style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; color: #333; text-align: center;">
-        <h2 style="color: #1F4E79; margin-bottom: 10px;">Acceso Seguro</h2>
-        <input type="password" id="pin-input" placeholder="Clave de Acceso" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
-        <button onclick="validarPin()" style="width: 100%; padding: 15px; background: #1F4E79; color: white; border: none; border-radius: 10px; font-weight: bold;">ACTIVAR</button>
+        <h2 id="txt-lock-title" style="color: #1F4E79; margin-bottom: 10px;">Acceso Seguro</h2>
+        <input type="password" id="pin-input" placeholder="PIN" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
+        <button id="txt-lock-btn" onclick="validarPin()" style="width: 100%; padding: 15px; background: #1F4E79; color: white; border: none; border-radius: 10px; font-weight: bold;">ACTIVAR</button>
         <p id="error-msg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Clave incorrecta.</p>
     </div>
 </div>
 
 <div class="header">
-    <h1>MI FINANZAS PRO</h1>
+    <button class="lang-switch" onclick="toggleLang()">🇪🇸/🇺🇸 <span id="lang-label">ES</span></button>
+    <h1 id="app-title">MI FINANZAS PRO</h1>
 </div>
 
 <div id="scr-home" class="screen active">
-    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APLICACIÓN</button>
+    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APP</button>
     <div class="kpi-grid">
-        <div class="kpi-card" style="border-top-color:var(--accent)"><div>Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
-        <div class="kpi-card" style="border-top-color:var(--danger)"><div>Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--accent)"><div id="txt-kpi-in">Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--danger)"><div id="txt-kpi-out">Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
     </div>
     <div class="kpi-grid">
-        <div class="kpi-card" style="border-top-color:#f1c40f"><div>Deudas</div><div id="res-deuda" style="color:#f1c40f; font-weight:bold;">$ 0</div></div>
-        <div class="kpi-card" style="border-top-color:var(--primary)"><div>Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:#f1c40f"><div id="txt-kpi-deu">Deudas</div><div id="res-deuda" style="color:#f1c40f; font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--primary)"><div id="txt-kpi-net">Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
     </div>
-    <button onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
+    <button id="txt-btn-excel" onclick="exportarExcelPro()" class="btn btn-excel">📊 Descargar Reporte</button>
 </div>
 
 <div id="scr-add" class="screen">
     <div class="card">
         <input type="hidden" id="edit-index" value="-1">
-        <div class="form-group"><label>Tercero / Cliente</label><input type="text" id="ter" placeholder="Nombre completo"></div>
-        <div class="form-group"><label>Identificación</label><input type="text" id="nit" placeholder="NIT o Cédula"></div>
-        <div class="form-group"><label>Concepto</label><input type="text" id="desc" placeholder="Detalle del movimiento"></div>
-        <div class="form-group"><label>Monto</label><input type="number" id="amt" placeholder="Valor en pesos"></div>
-        <div class="form-group"><label>Tipo de Operación</label>
-            <select id="type">
-                <option value="in">Ingreso (+)</option>
-                <option value="out">Gasto (-)</option>
-                <option value="deu">Deuda (Pendiente)</option>
+        <div class="form-group"><label id="lbl-ter">Tercero</label><input type="text" id="ter"></div>
+        <div class="form-group"><label id="lbl-nit">NIT / CC</label><input type="text" id="nit"></div>
+        <div class="form-group"><label id="lbl-des">Concepto</label><input type="text" id="desc"></div>
+        <div class="form-group"><label id="lbl-amt">Monto</label><input type="number" id="amt"></div>
+        <div class="form-group"><label id="lbl-typ">Tipo</label>
+            <select id="type" onchange="toggleAbonoLogic()">
+                <option value="in" id="opt-in">Ingreso (+)</option>
+                <option value="out" id="opt-out">Gasto (-)</option>
+                <option value="deu_up" id="opt-deu-up">Deuda (Aumentar +)</option>
+                <option value="deu_down" id="opt-deu-down">Deuda (Disminuir -)</option>
             </select>
         </div>
-        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar Registro</button>
+        <!-- Opción Contable Especial -->
+        <div class="checkbox-group" id="abono-logic-container">
+            <input type="checkbox" id="chk-afectar-saldo">
+            <label id="lbl-afectar" style="font-size: 0.85rem; cursor:pointer;">¿Descontar del Saldo Actual?</label>
+        </div>
+        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar</button>
     </div>
 </div>
 
 <div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
 
 <div id="scr-rec" class="screen">
-    <div class="receipt-box" id="rec-box"><p style="text-align:center; color:#888;">Sin registros recientes.</p></div>
-    <button onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir Comprobante</button>
+    <div class="receipt-box" id="rec-box"></div>
+    <button id="txt-btn-print" onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir</button>
 </div>
 
 <nav class="bottom-nav">
-    <button class="nav-item active" onclick="nav('scr-home', this)">🏠<br>Inicio</button>
-    <button class="nav-item" onclick="nav('scr-add', this)">➕<br>Nuevo</button>
-    <button class="nav-item" onclick="nav('scr-hist', this)">📜<br>Historial</button>
-    <button class="nav-item" onclick="nav('scr-rec', this)">📑<br>Recibo</button>
+    <button class="nav-item active" onclick="nav('scr-home', this)">🏠<br><span id="txt-nav-home">Inicio</span></button>
+    <button class="nav-item" onclick="nav('scr-add', this)">➕<br><span id="txt-nav-add">Nuevo</span></button>
+    <button class="nav-item" onclick="nav('scr-hist', this)">📜<br><span id="txt-nav-hist">Historial</span></button>
+    <button class="nav-item" onclick="nav('scr-rec', this)">📑<br><span id="txt-nav-rec">Recibo</span></button>
 </nav>
 
 <script>
-    // --- CONTROL DE ACTUALIZACIONES ---
-    const VERSION_APP = "2.2"; 
-    function checkUpdate() {
-        if(localStorage.getItem('app_v') !== VERSION_APP) {
-            // No borramos la base de datos de registros, solo notificamos cambio
-            localStorage.setItem('app_v', VERSION_APP);
-            console.log("Nueva versión cargada: " + VERSION_APP);
-        }
-    }
-    checkUpdate();
-
-    let deferredPrompt;
-    const btnInstalar = document.getElementById('btn-instalar-manual');
-    window.addEventListener('beforeinstallprompt', (e) => { 
-        e.preventDefault(); deferredPrompt = e; 
-        if (localStorage.getItem('app_act_v11') === 'true') btnInstalar.style.display = 'block'; 
-    });
-
-    btnInstalar.addEventListener('click', async () => { 
-        if (deferredPrompt) { 
-            deferredPrompt.prompt(); 
-            const { outcome } = await deferredPrompt.userChoice; 
-            if (outcome === 'accepted') btnInstalar.style.display = 'none'; 
-            deferredPrompt = null; 
-        } 
-    });
-
     const CLAVE_MAESTRA = "FREDDY2026"; 
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
+    let currentLang = localStorage.getItem('app_lang') || 'es';
+
+    const langData = {
+        es: {
+            appTitle: "MI FINANZAS PRO", lblTer: "Tercero / Cliente", lblNit: "Identificación",
+            lblDes: "Concepto", lblAmt: "Monto", lblTyp: "Tipo", lblAfectar: "¿Descontar del Saldo Actual?",
+            btnSave: "✅ Guardar Registro", navHome: "Inicio", navAdd: "Nuevo", navHist: "Historial", navRec: "Recibo",
+            kpiIn: "Ingresos", kpiOut: "Gastos", kpiDeu: "Deudas", kpiNet: "Saldo Neto"
+        },
+        en: {
+            appTitle: "MY FINANCES PRO", lblTer: "Client", lblNit: "ID Number",
+            lblDes: "Concept", lblAmt: "Amount", lblTyp: "Type", lblAfectar: "Deduct from Balance?",
+            btnSave: "✅ Save Record", navHome: "Home", navAdd: "Add", navHist: "History", navRec: "Receipt",
+            kpiIn: "Incomes", kpiOut: "Expenses", kpiDeu: "Debts", kpiNet: "Balance"
+        }
+    };
+
+    function toggleLang() {
+        currentLang = currentLang === 'es' ? 'en' : 'es';
+        localStorage.setItem('app_lang', currentLang);
+        location.reload();
+    }
+
+    function toggleAbonoLogic() {
+        const type = document.getElementById('type').value;
+        document.getElementById('abono-logic-container').style.display = type === 'deu_down' ? 'flex' : 'none';
+    }
 
     function validarPin() {
         if (document.getElementById('pin-input').value === CLAVE_MAESTRA) {
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
-            if (deferredPrompt) btnInstalar.style.display = 'block';
         } else { document.getElementById('error-msg').style.display = 'block'; }
     }
 
@@ -152,13 +160,47 @@
 
     function saveData() {
         const idx = document.getElementById('edit-index').value;
-        const entry = { ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), type: document.getElementById('type').value, date: idx === "-1" ? new Date().toLocaleString() : db[idx].date };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Por favor complete los campos obligatorios");
+        const type = document.getElementById('type').value;
+        const afectarSaldo = document.getElementById('chk-afectar-saldo').checked;
+
+        const entry = { 
+            ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, 
+            desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), 
+            type: type, afectarSaldo: afectarSaldo, date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
+        };
         
-        if(idx === "-1") db.push(entry); else { db[idx] = entry; document.getElementById('edit-index').value = "-1"; document.getElementById('btn-save').innerText = "✅ Guardar Registro"; }
+        if(!entry.ter || isNaN(entry.amt)) return alert("Data Incomplete");
+        if(idx === "-1") db.push(entry); else db[idx] = entry;
         
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
+    }
+
+    function updateUI() {
+        let i = 0, g = 0, d = 0;
+        db.forEach(item => { 
+            if(item.type == 'in') i += item.amt; 
+            else if(item.type == 'out') g += item.amt; 
+            else if(item.type == 'deu_up') d += item.amt;
+            else if(item.type == 'deu_down') {
+                d -= item.amt;
+                if(item.afectarSaldo) g += item.amt; // Si marca el check, se cuenta como salida de dinero
+            }
+        });
+        document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
+        document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
+        document.getElementById('res-deuda').innerText = "$ " + d.toLocaleString();
+        document.getElementById('res-net').innerText = "$ " + (i - g).toLocaleString();
+    }
+
+    function renderHist() {
+        const list = document.getElementById('hist-list');
+        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos.</p>";
+        db.slice().reverse().forEach((d, index) => {
+            const actualIndex = db.length - 1 - index;
+            let color = d.type === 'in' ? 'var(--accent)' : (d.type === 'out' ? 'var(--danger)' : 'var(--warning)');
+            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">$${d.amt.toLocaleString()}</div><button onclick="editItem(${actualIndex})">✏️</button><button onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
+        });
     }
 
     function editItem(index) {
@@ -169,60 +211,39 @@
         document.getElementById('amt').value = item.amt;
         document.getElementById('type').value = item.type;
         document.getElementById('edit-index').value = index;
-        document.getElementById('btn-save').innerText = "🔄 Actualizar Registro";
-        nav('scr-add', document.querySelectorAll('.nav-item'));
+        toggleAbonoLogic();
+        document.getElementById('chk-afectar-saldo').checked = item.afectarSaldo || false;
+        nav('scr-add');
     }
 
-    function updateUI() {
-        let i = 0, g = 0, d = 0;
-        db.forEach(item => { if(item.type == 'in') i += item.amt; else if(item.type == 'out') g += item.amt; else d += item.amt; });
-        document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
-        document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
-        document.getElementById('res-deuda').innerText = "$ " + d.toLocaleString();
-        document.getElementById('res-net').innerText = "$ " + (i - g).toLocaleString();
-    }
-
-    function renderHist() {
-        const list = document.getElementById('hist-list');
-        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos registrados.</p>";
-        db.slice().reverse().forEach((d, index) => {
-            const actualIndex = db.length - 1 - index;
-            const color = d.type=='in'?'var(--accent)':(d.type=='out'?'var(--danger)':'var(--warning)');
-            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">$${d.amt.toLocaleString()}</div><button class="btn-edit" onclick="editItem(${actualIndex})">Editar</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">Borrar</button></div></div>`;
-        });
-    }
-
-    function deleteItem(index) { if(confirm("¿Seguro que desea eliminar este registro?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
+    function deleteItem(index) { if(confirm("¿Borrar?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
 
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
         if (db.length === 0) return;
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000; margin-bottom:10px;">MI FINANZAS PRO</h3><p style="text-align:center; font-size:0.8rem; margin-bottom:15px;">Soporte Contable Digital</p><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><p><b>IDENTIFICACIÓN:</b> ${last.nit}</p><p><b>DETALLE:</b> ${last.desc}</p><hr style="border:1px dashed #ccc; margin:10px 0;"><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">MI FINANZAS PRO</h3><p><b>FECHA:</b> ${last.date}</p><p><b>CLIENTE:</b> ${last.ter.toUpperCase()}</p><p><b>DETALLE:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
     }
 
     function exportarExcelPro() {
-        if (db.length === 0) return alert("No hay datos para exportar");
-        const titulo = "MI FINANZAS PRO - REPORTE GENERAL DE MOVIMIENTOS\n";
-        const subtitulo = "Generado el: " + new Date().toLocaleString() + "\n\n";
-        const columnas = "FECHA;TERCERO;IDENTIFICACION;CONCEPTO;TIPO;MONTO\n";
-        const filas = db.map(i => {
-            return `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type === 'in' ? 'INGRESO' : (i.type === 'out' ? 'GASTO' : 'DEUDA')};${i.amt}`;
-        }).join("\n");
-        const contenido = "\ufeff" + titulo + subtitulo + columnas + filas;
-        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+        const rows = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.desc.toUpperCase()};${i.type};${i.amt}`).join("\n");
+        const blob = new Blob(["\ufeffFECHA;TERCERO;CONCEPTO;TIPO;MONTO\n" + rows], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Finanzas_Pro.csv";
+        link.download = "Reporte_Pro.csv";
         link.click();
     }
 
-    function limpiarForm() { document.getElementById('ter').value = ""; document.getElementById('nit').value = ""; document.getElementById('desc').value = ""; document.getElementById('amt').value = ""; document.getElementById('edit-index').value = "-1"; }
+    function limpiarForm() { 
+        document.getElementById('ter').value = ""; document.getElementById('nit').value = "";
+        document.getElementById('desc').value = ""; document.getElementById('amt').value = "";
+        document.getElementById('edit-index').value = "-1";
+        document.getElementById('chk-afectar-saldo').checked = false;
+        toggleAbonoLogic();
+    }
 
     window.onload = function() { 
-        if (localStorage.getItem('app_act_v11') === 'true') {
-            document.getElementById('lock-screen').style.display = 'none';
-        }
+        if (localStorage.getItem('app_act_v11') === 'true') document.getElementById('lock-screen').style.display = 'none'; 
         updateUI(); 
     }
 </script>
