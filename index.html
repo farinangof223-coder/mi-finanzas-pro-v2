@@ -17,7 +17,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
         .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-        .lang-switch { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
+        .lang-switch { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
@@ -33,34 +33,29 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; font-size: 1rem; }
         .btn-primary { background: var(--primary); }
         .btn-excel { background: #1D6F42; }
-        .btn-install { background: #FF5722; display: none; border: 2px solid #fff; animation: pulse 2s infinite; margin-bottom: 15px; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-delete { background: #ffebee; color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 5px; }
-        .btn-edit { background: #e3f2fd; color: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+        .btn-edit { color: var(--secondary); background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .btn-delete { color: var(--danger); background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 10px; }
         .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
         .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
-        .checkbox-group input { width: auto; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen" style="position: fixed; inset: 0; background: #1F4E79; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px;">
     <div style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; color: #333; text-align: center;">
-        <h2 id="txt-lock-title" style="color: #1F4E79; margin-bottom: 10px;">Acceso Seguro</h2>
-        <input type="password" id="pin-input" placeholder="PIN" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
+        <h2 id="txt-lock-title">Acceso Seguro</h2>
+        <input type="password" id="pin-input" placeholder="PIN" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin: 15px 0; text-align: center;">
         <button id="txt-lock-btn" onclick="validarPin()" style="width: 100%; padding: 15px; background: #1F4E79; color: white; border: none; border-radius: 10px; font-weight: bold;">ACTIVAR</button>
-        <p id="error-msg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Clave incorrecta.</p>
     </div>
 </div>
 
 <div class="header">
-    <button class="lang-switch" onclick="toggleLang()">🇪🇸/🇺🇸 <span id="lang-label">ES</span></button>
+    <button class="lang-switch" onclick="toggleLang()">🇺🇸/🇪🇸 <span id="lang-label">ES</span></button>
     <h1 id="app-title">MI FINANZAS PRO</h1>
 </div>
 
 <div id="scr-home" class="screen active">
-    <button id="btn-instalar-manual" class="btn btn-install">📲 INSTALAR APP</button>
     <div class="kpi-grid">
         <div class="kpi-card" style="border-top-color:var(--accent)"><div id="txt-kpi-in">Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--danger)"><div id="txt-kpi-out">Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
@@ -87,10 +82,9 @@
                 <option value="deu_down" id="opt-deu-down">Deuda (Disminuir -)</option>
             </select>
         </div>
-        <!-- Opción Contable Especial -->
-        <div class="checkbox-group" id="abono-logic-container">
+        <div class="checkbox-group" id="abono-logic-container" style="display:none; align-items:center; gap:10px;">
             <input type="checkbox" id="chk-afectar-saldo">
-            <label id="lbl-afectar" style="font-size: 0.85rem; cursor:pointer;">¿Descontar del Saldo Actual?</label>
+            <label id="lbl-afectar" style="font-size:0.8rem;">¿Descontar de saldo?</label>
         </div>
         <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar</button>
     </div>
@@ -115,25 +109,56 @@
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
     let currentLang = localStorage.getItem('app_lang') || 'es';
 
-    const langData = {
+    const translations = {
         es: {
-            appTitle: "MI FINANZAS PRO", lblTer: "Tercero / Cliente", lblNit: "Identificación",
-            lblDes: "Concepto", lblAmt: "Monto", lblTyp: "Tipo", lblAfectar: "¿Descontar del Saldo Actual?",
-            btnSave: "✅ Guardar Registro", navHome: "Inicio", navAdd: "Nuevo", navHist: "Historial", navRec: "Recibo",
-            kpiIn: "Ingresos", kpiOut: "Gastos", kpiDeu: "Deudas", kpiNet: "Saldo Neto"
+            title: "MI FINANZAS PRO", lock: "Acceso Seguro", act: "ACTIVAR", in: "Ingresos", out: "Gastos", deu: "Deudas", net: "Saldo Neto",
+            excel: "📊 Descargar Reporte Profesional", ter: "Tercero / Cliente", nit: "Identificación", des: "Concepto", amt: "Monto", typ: "Tipo",
+            optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
+            afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
+            home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos."
         },
         en: {
-            appTitle: "MY FINANCES PRO", lblTer: "Client", lblNit: "ID Number",
-            lblDes: "Concept", lblAmt: "Amount", lblTyp: "Type", lblAfectar: "Deduct from Balance?",
-            btnSave: "✅ Save Record", navHome: "Home", navAdd: "Add", navHist: "History", navRec: "Receipt",
-            kpiIn: "Incomes", kpiOut: "Expenses", kpiDeu: "Debts", kpiNet: "Balance"
+            title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
+            excel: "📊 Download Professional Report", ter: "Client / Third Party", nit: "ID Number", des: "Concept", amt: "Amount", typ: "Type",
+            optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
+            afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
+            home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data."
         }
     };
+
+    function applyLang() {
+        const t = translations[currentLang];
+        document.getElementById('app-title').innerText = t.title;
+        document.getElementById('txt-lock-title').innerText = t.lock;
+        document.getElementById('txt-lock-btn').innerText = t.act;
+        document.getElementById('txt-kpi-in').innerText = t.in;
+        document.getElementById('txt-kpi-out').innerText = t.out;
+        document.getElementById('txt-kpi-deu').innerText = t.deu;
+        document.getElementById('txt-kpi-net').innerText = t.net;
+        document.getElementById('txt-btn-excel').innerText = t.excel;
+        document.getElementById('lbl-ter').innerText = t.ter;
+        document.getElementById('lbl-nit').innerText = t.nit;
+        document.getElementById('lbl-des').innerText = t.des;
+        document.getElementById('lbl-amt').innerText = t.amt;
+        document.getElementById('lbl-typ').innerText = t.typ;
+        document.getElementById('opt-in').innerText = t.optIn;
+        document.getElementById('opt-out').innerText = t.optOut;
+        document.getElementById('opt-deu-up').innerText = t.optDeuUp;
+        document.getElementById('opt-deu-down').innerText = t.optDeuDown;
+        document.getElementById('lbl-afectar').innerText = t.afectar;
+        document.getElementById('txt-nav-home').innerText = t.home;
+        document.getElementById('txt-nav-add').innerText = t.add;
+        document.getElementById('txt-nav-hist').innerText = t.hist;
+        document.getElementById('txt-nav-rec').innerText = t.rec;
+        document.getElementById('txt-btn-print').innerText = t.share;
+        document.getElementById('lang-label').innerText = currentLang.toUpperCase();
+        document.getElementById('btn-save').innerText = document.getElementById('edit-index').value === "-1" ? t.save : t.update;
+    }
 
     function toggleLang() {
         currentLang = currentLang === 'es' ? 'en' : 'es';
         localStorage.setItem('app_lang', currentLang);
-        location.reload();
+        applyLang();
     }
 
     function toggleAbonoLogic() {
@@ -145,7 +170,7 @@
         if (document.getElementById('pin-input').value === CLAVE_MAESTRA) {
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
-        } else { document.getElementById('error-msg').style.display = 'block'; }
+        } else { alert("Error"); }
     }
 
     function nav(id, el) {
@@ -160,18 +185,14 @@
 
     function saveData() {
         const idx = document.getElementById('edit-index').value;
-        const type = document.getElementById('type').value;
-        const afectarSaldo = document.getElementById('chk-afectar-saldo').checked;
-
         const entry = { 
             ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, 
             desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), 
-            type: type, afectarSaldo: afectarSaldo, date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
+            type: document.getElementById('type').value, afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
+            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
-        
-        if(!entry.ter || isNaN(entry.amt)) return alert("Data Incomplete");
+        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete");
         if(idx === "-1") db.push(entry); else db[idx] = entry;
-        
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
     }
@@ -182,10 +203,7 @@
             if(item.type == 'in') i += item.amt; 
             else if(item.type == 'out') g += item.amt; 
             else if(item.type == 'deu_up') d += item.amt;
-            else if(item.type == 'deu_down') {
-                d -= item.amt;
-                if(item.afectarSaldo) g += item.amt; // Si marca el check, se cuenta como salida de dinero
-            }
+            else if(item.type == 'deu_down') { d -= item.amt; if(item.afectarSaldo) g += item.amt; }
         });
         document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
         document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
@@ -195,11 +213,10 @@
 
     function renderHist() {
         const list = document.getElementById('hist-list');
-        list.innerHTML = db.length ? "" : "<p style='text-align:center;'>Sin movimientos.</p>";
+        list.innerHTML = db.length ? "" : `<p style='text-align:center;'>${translations[currentLang].empty}</p>`;
         db.slice().reverse().forEach((d, index) => {
             const actualIndex = db.length - 1 - index;
-            let color = d.type === 'in' ? 'var(--accent)' : (d.type === 'out' ? 'var(--danger)' : 'var(--warning)');
-            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">$${d.amt.toLocaleString()}</div><button onclick="editItem(${actualIndex})">✏️</button><button onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
+            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><b>$${d.amt.toLocaleString()}</b><br><button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
         });
     }
 
@@ -211,26 +228,27 @@
         document.getElementById('amt').value = item.amt;
         document.getElementById('type').value = item.type;
         document.getElementById('edit-index').value = index;
-        toggleAbonoLogic();
         document.getElementById('chk-afectar-saldo').checked = item.afectarSaldo || false;
+        toggleAbonoLogic();
         nav('scr-add');
+        applyLang();
     }
 
-    function deleteItem(index) { if(confirm("¿Borrar?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
+    function deleteItem(index) { if(confirm("?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
 
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
-        if (db.length === 0) return;
+        if (!db.length) return;
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">MI FINANZAS PRO</h3><p><b>FECHA:</b> ${last.date}</p><p><b>CLIENTE:</b> ${last.ter.toUpperCase()}</p><p><b>DETALLE:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        box.innerHTML = `<h3 style="text-align:center;">${translations[currentLang].title}</h3><p><b>CLIENT:</b> ${last.ter.toUpperCase()}</p><p><b>DETAIL:</b> ${last.desc}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
     }
 
     function exportarExcelPro() {
         const rows = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.desc.toUpperCase()};${i.type};${i.amt}`).join("\n");
-        const blob = new Blob(["\ufeffFECHA;TERCERO;CONCEPTO;TIPO;MONTO\n" + rows], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(["\ufeffDATE;CLIENT;DETAIL;TYPE;AMOUNT\n" + rows], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Pro.csv";
+        link.download = "Report_Pro.csv";
         link.click();
     }
 
@@ -240,12 +258,15 @@
         document.getElementById('edit-index').value = "-1";
         document.getElementById('chk-afectar-saldo').checked = false;
         toggleAbonoLogic();
+        applyLang();
     }
 
     window.onload = function() { 
+        applyLang();
         if (localStorage.getItem('app_act_v11') === 'true') document.getElementById('lock-screen').style.display = 'none'; 
         updateUI(); 
     }
 </script>
 </body>
 </html>
+
