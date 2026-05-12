@@ -33,8 +33,7 @@
         .btn-primary { background: var(--primary); }
         .btn-excel { background: #1D6F42; }
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-edit { color: var(--secondary); background: none; border: none; font-size: 1.1rem; cursor: pointer; }
-        .btn-delete { color: var(--danger); background: none; border: none; font-size: 1.1rem; cursor: pointer; margin-left: 10px; }
+        .btn-edit, .btn-delete { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
         .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
     </style>
@@ -81,10 +80,17 @@
                 <option value="deu_down" id="opt-deu-down">Deuda (Disminuir -)</option>
             </select>
         </div>
-        <div class="checkbox-group" id="abono-logic-container" style="display:none; align-items:center; gap:10px;">
+        
+        <!-- Lógica Dinámica de Deudas -->
+        <div class="checkbox-group" id="deuda-up-logic" style="display:none;">
+            <input type="checkbox" id="chk-sumar-ingreso">
+            <label id="lbl-sumar" style="font-size:0.8rem; cursor:pointer;">¿Sumar a los Ingresos Actuales?</label>
+        </div>
+        <div class="checkbox-group" id="deuda-down-logic" style="display:none;">
             <input type="checkbox" id="chk-afectar-saldo">
             <label id="lbl-afectar" style="font-size:0.8rem; cursor:pointer;">¿Descontar del Saldo Actual?</label>
         </div>
+
         <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar Registro</button>
     </div>
 </div>
@@ -113,7 +119,7 @@
             title: "MI FINANZAS PRO", lock: "Acceso Seguro", act: "ACTIVAR", in: "Ingresos", out: "Gastos", deu: "Deudas", net: "Saldo Neto",
             excel: "📊 Descargar Reporte Profesional", ter: "Tercero / Cliente", nit: "Identificación", des: "Concepto", amt: "Monto", typ: "Tipo",
             optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
-            afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
+            sumar: "¿Sumar a los Ingresos Actuales?", afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
             home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
             csvH: "FECHA;TERCERO;NIT;CONCEPTO;TIPO;MONTO"
         },
@@ -121,7 +127,7 @@
             title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
             excel: "📊 Download Professional Report", ter: "Client / Third Party", nit: "ID Number", des: "Concept", amt: "Amount", typ: "Type",
             optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
-            afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
+            sumar: "Add to Current Incomes?", afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
             home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
             csvH: "DATE;CLIENT;ID;CONCEPT;TYPE;AMOUNT"
         }
@@ -146,6 +152,7 @@
         document.getElementById('opt-out').innerText = t.optOut;
         document.getElementById('opt-deu-up').innerText = t.optDeuUp;
         document.getElementById('opt-deu-down').innerText = t.optDeuDown;
+        document.getElementById('lbl-sumar').innerText = t.sumar;
         document.getElementById('lbl-afectar').innerText = t.afectar;
         document.getElementById('txt-nav-home').innerText = t.home;
         document.getElementById('txt-nav-add').innerText = t.add;
@@ -164,7 +171,8 @@
 
     function toggleAbonoLogic() {
         const type = document.getElementById('type').value;
-        document.getElementById('abono-logic-container').style.display = type === 'deu_down' ? 'flex' : 'none';
+        document.getElementById('deuda-up-logic').style.display = type === 'deu_up' ? 'flex' : 'none';
+        document.getElementById('deuda-down-logic').style.display = type === 'deu_down' ? 'flex' : 'none';
     }
 
     function validarPin() {
@@ -190,7 +198,9 @@
         const entry = { 
             ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, 
             desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), 
-            type: document.getElementById('type').value, afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
+            type: document.getElementById('type').value, 
+            afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
+            sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
         if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete Data");
@@ -204,8 +214,14 @@
         db.forEach(item => { 
             if(item.type == 'in') i += item.amt; 
             else if(item.type == 'out') g += item.amt; 
-            else if(item.type == 'deu_up') d += item.amt;
-            else if(item.type == 'deu_down') { d -= item.amt; if(item.afectarSaldo) g += item.amt; }
+            else if(item.type == 'deu_up') {
+                d += item.amt;
+                if(item.sumarIngreso) i += item.amt; // Si presta y marca check, sube el ingreso
+            }
+            else if(item.type == 'deu_down') {
+                d -= item.amt;
+                if(item.afectarSaldo) g += item.amt; // Si abona y marca check, sube el gasto
+            }
         });
         document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
         document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
@@ -235,6 +251,7 @@
         document.getElementById('type').value = item.type;
         document.getElementById('edit-index').value = index;
         document.getElementById('chk-afectar-saldo').checked = item.afectarSaldo || false;
+        document.getElementById('chk-sumar-ingreso').checked = item.sumarIngreso || false;
         toggleAbonoLogic(); nav('scr-add'); applyLang();
     }
 
@@ -249,15 +266,11 @@
 
     function exportarExcelPro() {
         const t = translations[currentLang];
-        const titulo = t.title + " - REPORT\n";
-        const subtitulo = "Generated: " + new Date().toLocaleString() + "\n\n";
-        const encabezados = t.csvH + "\n";
-        const filas = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
-        const contenido = "\ufeff" + titulo + subtitulo + encabezados + filas;
-        const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+        const rows = db.map(i => `${i.date};${i.ter.toUpperCase()};${i.nit};${i.desc.toUpperCase()};${i.type.toUpperCase()};${i.amt}`).join("\n");
+        const blob = new Blob(["\ufeff" + t.csvH + "\n" + rows], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Farinango_Pro.csv";
+        link.download = "Reporte_Freddy_Pro.csv";
         link.click();
     }
 
@@ -266,6 +279,7 @@
         document.getElementById('desc').value = ""; document.getElementById('amt').value = "";
         document.getElementById('edit-index').value = "-1";
         document.getElementById('chk-afectar-saldo').checked = false;
+        document.getElementById('chk-sumar-ingreso').checked = false;
         toggleAbonoLogic(); applyLang();
     }
 
