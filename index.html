@@ -83,6 +83,17 @@
 
 <!-- VISTA INICIO -->
 <div id="scr-home" class="screen active">
+    <!-- 💱 MÓDULO DE DIVISA CONFIGURABLE -->
+    <div class="card" style="padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <label id="lbl-currency" style="font-size: 0.85rem; font-weight: bold; color: #555;">Moneda de Trabajo:</label>
+        <select id="currency-select" onchange="changeCurrency()" style="width: auto; padding: 6px 12px; font-size: 0.9rem; border-radius: 6px;">
+            <option value="COP">COP ($ Pesos)</option>
+            <option value="USD">USD ($ Dólar)</option>
+            <option value="EUR">EUR (€ Euro)</option>
+            <option value="MXN">MXN ($ Peso Mx)</option>
+        </select>
+    </div>
+
     <div class="kpi-grid">
         <div class="kpi-card" style="border-top-color:var(--accent)"><div id="txt-kpi-in">Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
         <div class="kpi-card" style="border-top-color:var(--danger)"><div id="txt-kpi-out">Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
@@ -145,6 +156,15 @@
     const CLAVE_MAESTRA = "FREDDY2026"; 
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
     let currentLang = localStorage.getItem('app_lang') || 'es';
+    let currentCurrency = localStorage.getItem('app_currency') || 'COP';
+
+    // Configuración formal de formateo contable según divisa
+    const currencyConfigs = {
+        COP: { locale: 'es-CO', symbol: '$', name: 'COP' },
+        USD: { locale: 'en-US', symbol: '$', name: 'USD' },
+        EUR: { locale: 'de-DE', symbol: '€', name: 'EUR' },
+        MXN: { locale: 'es-MX', symbol: '$', name: 'MXN' }
+    };
 
     const translations = {
         es: {
@@ -153,7 +173,7 @@
             optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
             sumar: "¿Sumar a los Ingresos Actuales?", afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
             home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
-            date: "FECHA", client: "TERCERO / CLIENTE", detail: "CONCEPTO", type: "TIPO MOVIMIENTO", amount: "MONTO TOTAL", taxId: "NIT / CÉDULA"
+            date: "FECHA", client: "TERCERO / CLIENTE", detail: "CONCEPTO", type: "TIPO MOVIMIENTO", amount: "MONTO TOTAL", taxId: "NIT / CÉDULA", lblCur: "Moneda de Trabajo:"
         },
         en: {
             title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
@@ -161,9 +181,23 @@
             optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
             sumar: "Add to Current Incomes?", afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
             home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
-            date: "DATE", client: "CLIENT / THIRD PARTY", detail: "DETAIL", type: "TRANSACTION TYPE", amount: "TOTAL AMOUNT", taxId: "TAX ID / ID"
+            date: "DATE", client: "CLIENT / THIRD PARTY", detail: "DETAIL", type: "TRANSACTION TYPE", amount: "TOTAL AMOUNT", taxId: "TAX ID / ID", lblCur: "Working Currency:"
         }
     };
+
+    // Función unificada para formatear dinero respetando la divisa de trabajo
+    function formatMoney(amount) {
+        const config = currencyConfigs[currentCurrency];
+        return `${config.symbol} ${amount.toLocaleString(config.locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    }
+
+    function changeCurrency() {
+        currentCurrency = document.getElementById('currency-select').value;
+        localStorage.setItem('app_currency', currentCurrency);
+        updateUI();
+        renderHist();
+        if(document.getElementById('scr-rec').classList.contains('active')) renderLastReceipt();
+    }
 
     function applyLang() {
         const t = translations[currentLang];
@@ -191,6 +225,7 @@
         document.getElementById('txt-nav-hist').innerText = t.hist;
         document.getElementById('txt-nav-rec').innerText = t.rec;
         document.getElementById('txt-btn-print').innerText = t.share;
+        document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
         document.getElementById('btn-save').innerText = document.getElementById('edit-index').value === "-1" ? t.save : t.update;
     }
@@ -265,10 +300,10 @@
             else if(item.type == 'deu_up') { d += item.amt; if(item.sumarIngreso) i += item.amt; }
             else if(item.type == 'deu_down') { d -= item.amt; if(item.afectarSaldo) g += item.amt; }
         });
-        document.getElementById('res-in').innerText = "$ " + i.toLocaleString();
-        document.getElementById('res-out').innerText = "$ " + g.toLocaleString();
-        document.getElementById('res-deuda').innerText = "$ " + d.toLocaleString();
-        document.getElementById('res-net').innerText = "$ " + (i - g).toLocaleString();
+        document.getElementById('res-in').innerText = formatMoney(i);
+        document.getElementById('res-out').innerText = formatMoney(g);
+        document.getElementById('res-deuda').innerText = formatMoney(d);
+        document.getElementById('res-net').innerText = formatMoney(i - g);
     }
 
     function renderHist() {
@@ -280,7 +315,7 @@
             if(d.type === 'in') color = 'var(--accent)';
             if(d.type === 'out') color = 'var(--danger)';
             if(d.type.startsWith('deu')) color = 'var(--warning)';
-            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">$${d.amt.toLocaleString()}</div><button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
+            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">${formatMoney(d.amt)}</div><button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
         });
     }
 
@@ -357,7 +392,7 @@
             
             <div class="receipt-total-row">
                 <span class="receipt-total-label">${t.amount}:</span>
-                <span class="receipt-total-value">$ ${last.amt.toLocaleString()}</span>
+                <span class="receipt-total-value">${formatMoney(last.amt)} <small style="font-size:0.8rem; color:#666;">(${currentCurrency})</small></span>
             </div>
         `;
     }
@@ -368,11 +403,12 @@
             return; 
         }
         const t = translations[currentLang];
+        const conf = currencyConfigs[currentCurrency];
         
         let html = `<table border="1">
             <tr>
                 <th colspan="6" style="background:#1F4E79; color:white; font-size:16px; padding:10px; text-align:center; font-family:'Segoe UI',sans-serif;">
-                    ${t.title} - REPORTE GERENCIAL
+                    ${t.title} - REPORTE GERENCIAL (${conf.name})
                 </th>
             </tr>
             <tr style="background:#2E75B6; color:white; font-weight:bold; text-align:center;">
@@ -387,7 +423,7 @@
         db.forEach(i => {
             let tipoLegible = i.type;
             if (i.type === 'in') tipoLegible = t.optIn;
-            else if (i.type === 'out') i.type === 'out' ? tipoLegible = t.optOut : null;
+            else if (i.type === 'out') tipoLegible = t.optOut;
             else if (i.type === 'deu_up') tipoLegible = t.optDeuUp;
             else if (i.type === 'deu_down') tipoLegible = t.optDeuDown;
 
@@ -397,7 +433,7 @@
                 <td style="text-align:center;">${i.nit || 'N/A'}</td>
                 <td>${i.desc}</td>
                 <td style="text-align:center;">${tipoLegible.replace(/[()+\-]/g, '').trim()}</td>
-                <td style="text-align:right; font-weight:bold;">$ ${i.amt.toLocaleString()}</td>
+                <td style="text-align:right; font-weight:bold;">${conf.symbol} ${i.amt.toLocaleString(conf.locale)}</td>
             </tr>`;
         });
         
@@ -405,9 +441,11 @@
         const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'MiFinanzasPro_Reporte.xls'; a.click();
+        a.href = url; a.download = `MiFinanzasPro_Reporte_${conf.name}.xls`; a.click();
     }
 
+    // Inicialización del sistema cargando divisa e idioma guardados
+    document.getElementById('currency-select').value = currentCurrency;
     if (localStorage.getItem('app_act_v11') === 'true') {
         document.getElementById('lock-screen').style.display = 'none';
     }
