@@ -618,7 +618,13 @@
             incomeName: "Ingreso",
             expenseName: "Gasto",
             debtUpName: "Deuda aumentada",
-            debtDownName: "Deuda disminuida"
+            debtDownName: "Deuda disminuida",
+            reportTitle: "REPORTE GERENCIAL",
+            generatedReport: "Reporte generado",
+            workingCurrency: "Moneda de trabajo",
+            movementDetail: "DETALLE DE MOVIMIENTOS",
+            currency: "MONEDA",
+            autoReport: "Reporte generado automáticamente"
         },
         en: {
             title: "MY FINANCES PRO",
@@ -665,7 +671,13 @@
             incomeName: "Income",
             expenseName: "Expense",
             debtUpName: "Debt increased",
-            debtDownName: "Debt decreased"
+            debtDownName: "Debt decreased",
+            reportTitle: "MANAGEMENT REPORT",
+            generatedReport: "Generated report",
+            workingCurrency: "Working currency",
+            movementDetail: "TRANSACTION DETAILS",
+            currency: "CURRENCY",
+            autoReport: "Automatically generated report"
         }
     };
 
@@ -1037,61 +1049,218 @@
         const t = translations[currentLang];
         const conf = currencyConfigs[currentCurrency];
 
-        let html = `
-            <table border="1">
-                <tr>
-                    <th colspan="6" style="background:#1F4E79; color:white; font-size:16px; padding:10px; text-align:center; font-family:'Segoe UI',sans-serif;">
-                        ${t.title} - REPORTE GERENCIAL (${conf.name})
-                    </th>
-                </tr>
+        let totalIngresos = 0;
+        let totalGastos = 0;
+        let totalDeudas = 0;
 
-                <tr style="background:#2E75B6; color:white; font-weight:bold; text-align:center;">
-                    <th style="padding:5px;">${t.date}</th>
-                    <th style="padding:5px;">${t.client}</th>
-                    <th style="padding:5px;">${t.taxId}</th>
-                    <th style="padding:5px;">${t.detail}</th>
-                    <th style="padding:5px;">${t.type}</th>
-                    <th style="padding:5px;">${t.amount}</th>
-                </tr>
+        db.forEach(item => {
+            if (item.type === 'in') {
+                totalIngresos += item.amt;
+            } else if (item.type === 'out') {
+                totalGastos += item.amt;
+            } else if (item.type === 'deu_up') {
+                totalDeudas += item.amt;
+
+                if (item.sumarIngreso) {
+                    totalIngresos += item.amt;
+                }
+            } else if (item.type === 'deu_down') {
+                totalDeudas -= item.amt;
+
+                if (item.afectarSaldo) {
+                    totalGastos += item.amt;
+                }
+            }
+        });
+
+        const saldoNeto = totalIngresos - totalGastos;
+
+        let html = `
+            <html>
+            <head>
+                <meta charset="UTF-8">
+            </head>
+
+            <body>
+                <table style="border-collapse:collapse; width:100%; font-family:Arial, sans-serif;">
+
+                    <tr>
+                        <th colspan="8" style="
+                            background:#1F4E79;
+                            color:white;
+                            font-size:22px;
+                            padding:18px;
+                            text-align:center;
+                            border:1px solid #1F4E79;">
+                            ${t.title} - ${t.reportTitle}
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <td colspan="8" style="
+                            background:#D9EAF7;
+                            color:#1F4E79;
+                            font-size:13px;
+                            padding:10px;
+                            text-align:center;
+                            border:1px solid #B7D7EF;">
+                            ${t.workingCurrency}: <b>${conf.name}</b> |
+                            ${t.generatedReport}: <b>${new Date().toLocaleString()}</b>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="8" style="height:15px;"></td>
+                    </tr>
+
+                    <tr>
+                        <th colspan="2" style="background:#70AD47; color:white; padding:10px; border:1px solid #999;">
+                            ${t.in}
+                        </th>
+                        <th colspan="2" style="background:#C00000; color:white; padding:10px; border:1px solid #999;">
+                            ${t.out}
+                        </th>
+                        <th colspan="2" style="background:#F1C40F; color:#333; padding:10px; border:1px solid #999;">
+                            ${t.deu}
+                        </th>
+                        <th colspan="2" style="background:#1F4E79; color:white; padding:10px; border:1px solid #999;">
+                            ${t.net}
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2" style="font-size:16px; font-weight:bold; text-align:center; padding:12px; border:1px solid #999;">
+                            ${conf.symbol} ${totalIngresos.toLocaleString(conf.locale)}
+                        </td>
+                        <td colspan="2" style="font-size:16px; font-weight:bold; text-align:center; padding:12px; border:1px solid #999;">
+                            ${conf.symbol} ${totalGastos.toLocaleString(conf.locale)}
+                        </td>
+                        <td colspan="2" style="font-size:16px; font-weight:bold; text-align:center; padding:12px; border:1px solid #999;">
+                            ${conf.symbol} ${totalDeudas.toLocaleString(conf.locale)}
+                        </td>
+                        <td colspan="2" style="font-size:16px; font-weight:bold; text-align:center; padding:12px; border:1px solid #999;">
+                            ${conf.symbol} ${saldoNeto.toLocaleString(conf.locale)}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="8" style="height:18px;"></td>
+                    </tr>
+
+                    <tr>
+                        <th colspan="8" style="
+                            background:#2E75B6;
+                            color:white;
+                            font-size:16px;
+                            padding:12px;
+                            text-align:left;
+                            border:1px solid #2E75B6;">
+                            ${t.movementDetail}
+                        </th>
+                    </tr>
+
+                    <tr style="background:#1F4E79; color:white; font-weight:bold; text-align:center;">
+                        <th style="padding:10px; border:1px solid #999; width:40px;">#</th>
+                        <th style="padding:10px; border:1px solid #999; width:160px;">${t.date}</th>
+                        <th style="padding:10px; border:1px solid #999; width:180px;">${t.client}</th>
+                        <th style="padding:10px; border:1px solid #999; width:120px;">${t.taxId}</th>
+                        <th style="padding:10px; border:1px solid #999; width:260px;">${t.detail}</th>
+                        <th style="padding:10px; border:1px solid #999; width:150px;">${t.type}</th>
+                        <th style="padding:10px; border:1px solid #999; width:140px;">${t.amount}</th>
+                        <th style="padding:10px; border:1px solid #999; width:100px;">${t.currency}</th>
+                    </tr>
         `;
 
-        db.forEach(i => {
+        db.forEach((i, index) => {
             let tipoLegible = i.type;
+            let rowBg = index % 2 === 0 ? "#FFFFFF" : "#F7F9FB";
+            let tipoColor = "#1F4E79";
 
             if (i.type === 'in') {
                 tipoLegible = t.optIn;
+                tipoColor = "#70AD47";
             } else if (i.type === 'out') {
                 tipoLegible = t.optOut;
+                tipoColor = "#C00000";
             } else if (i.type === 'deu_up') {
                 tipoLegible = t.optDeuUp;
+                tipoColor = "#B7950B";
             } else if (i.type === 'deu_down') {
                 tipoLegible = t.optDeuDown;
+                tipoColor = "#B7950B";
             }
 
             html += `
-                <tr>
-                    <td style="text-align:center;">${i.date}</td>
-                    <td>${i.ter}</td>
-                    <td style="text-align:center;">${i.nit || 'N/A'}</td>
-                    <td>${i.desc}</td>
-                    <td style="text-align:center;">${tipoLegible.replace(/[()+\-]/g, '').trim()}</td>
-                    <td style="text-align:right; font-weight:bold;">${conf.symbol} ${i.amt.toLocaleString(conf.locale)}</td>
+                <tr style="background:${rowBg};">
+                    <td style="text-align:center; padding:9px; border:1px solid #ccc;">
+                        ${index + 1}
+                    </td>
+
+                    <td style="text-align:center; padding:9px; border:1px solid #ccc;">
+                        ${i.date}
+                    </td>
+
+                    <td style="padding:9px; border:1px solid #ccc; font-weight:bold;">
+                        ${i.ter}
+                    </td>
+
+                    <td style="text-align:center; padding:9px; border:1px solid #ccc;">
+                        ${i.nit || 'N/A'}
+                    </td>
+
+                    <td style="padding:9px; border:1px solid #ccc;">
+                        ${i.desc}
+                    </td>
+
+                    <td style="text-align:center; padding:9px; border:1px solid #ccc; color:${tipoColor}; font-weight:bold;">
+                        ${tipoLegible.replace(/[()+\\-]/g, '').trim()}
+                    </td>
+
+                    <td style="text-align:right; padding:9px; border:1px solid #ccc; font-weight:bold;">
+                        ${conf.symbol} ${i.amt.toLocaleString(conf.locale)}
+                    </td>
+
+                    <td style="text-align:center; padding:9px; border:1px solid #ccc;">
+                        ${conf.name}
+                    </td>
                 </tr>
             `;
         });
 
-        html += "</table>";
+        html += `
+                    <tr>
+                        <td colspan="8" style="height:15px;"></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="8" style="
+                            font-size:11px;
+                            color:#666;
+                            padding:10px;
+                            border-top:1px solid #ddd;
+                            text-align:center;">
+                            © 2026 Mi Finanzas Pro · ${t.autoReport}
+                        </td>
+                    </tr>
+
+                </table>
+            </body>
+            </html>
+        `;
 
         const blob = new Blob([html], {
-            type: 'application/vnd.ms-excel'
+            type: 'application/vnd.ms-excel;charset=utf-8;'
         });
 
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
 
         a.href = url;
-        a.download = `MiFinanzasPro_Reporte_${conf.name}.xls`;
+        a.download = `MiFinanzasPro_Reporte_${conf.name}_${new Date().toISOString().slice(0,10)}.xls`;
+
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
 
         URL.revokeObjectURL(url);
     }
