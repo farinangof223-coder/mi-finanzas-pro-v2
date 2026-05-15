@@ -8,64 +8,412 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+
     <style>
         :root {
-            --primary: #1F4E79; --secondary: #2E75B6; --accent: #70AD47;
-            --danger: #C00000; --warning: #f1c40f; --light: #F2F2F2; --white: #FFFFFF; --shadow: 0 2px 8px rgba(0,0,0,0.15);
+            --primary: #1F4E79;
+            --secondary: #2E75B6;
+            --accent: #70AD47;
+            --danger: #C00000;
+            --warning: #f1c40f;
+            --light: #F2F2F2;
+            --white: #FFFFFF;
+            --shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); padding-bottom: 80px; overflow-x: hidden; }
-        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px 20px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-        .lang-switch { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
-        .nav-item.active { color: var(--primary); }
-        .screen { display: none; padding: 16px; max-width: 550px; margin: 0 auto; }
-        .screen.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        .kpi-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); border-top: 4px solid var(--primary); }
-        .form-group { margin-bottom: 12px; text-align: left; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; font-size: 1rem; }
-        .btn-primary { background: var(--primary); }
-        .btn-excel { background: #1D6F42; }
-        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-edit, .btn-delete { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
-        .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
-        
-        /* 📑 Ventana de Recibo Profesional Ampliada a 550px */
-        .receipt-box { 
-            background: white; 
-            border: none; 
-            padding: 25px; 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: left; 
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--light);
+            padding-bottom: 80px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #888;
+            font-size: 0.65rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: bold;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .screen {
+            display: none;
+            padding: 16px;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+        }
+
+        .btn-excel {
+            background: #1D6F42;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-edit,
+        .btn-delete {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .checkbox-group {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            background: #fffde7;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #fff59d;
+        }
+
+        /* =========================
+           RECIBO PROFESIONAL
+        ========================= */
+
+        .receipt-box {
+            background: white;
+            border: none;
+            padding: 25px;
+            font-family: 'Segoe UI', sans-serif;
+            text-align: left;
             box-shadow: var(--shadow);
             border-radius: 12px;
             width: 100%;
             max-width: 550px;
             margin: 0 auto;
         }
-        .receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .receipt-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 0.5px; }
-        .receipt-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: white; }
-        .badge-in { background-color: var(--accent); }
-        .badge-out { background-color: var(--danger); }
-        .badge-deu { background-color: var(--warning); color: #333; }
-        .receipt-line { border: 0; border-top: 1px solid #eee; margin: 12px 0; }
-        .receipt-dash-line { border: 0; border-top: 2px dashed #ddd; margin: 18px 0; }
-        .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px; }
-        .receipt-label { color: #666; font-size: 0.9rem; font-weight: bold; min-width: 130px; text-transform: uppercase; }
-        .receipt-value { color: #222; font-size: 0.95rem; text-align: right; word-break: break-word; }
-        .receipt-value.bold { font-weight: 600; color: #000; }
-        .receipt-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 5px; }
-        .receipt-total-label { font-size: 1.1rem; font-weight: bold; color: #333; }
-        .receipt-total-value { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .receipt-brand {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+        }
+
+        .receipt-subtitle {
+            font-size: 0.82rem;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .receipt-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+            display: inline-block;
+        }
+
+        .badge-in {
+            background-color: var(--accent);
+        }
+
+        .badge-out {
+            background-color: var(--danger);
+        }
+
+        .badge-deu {
+            background-color: var(--warning);
+            color: #333;
+        }
+
+        .receipt-line {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 12px 0;
+        }
+
+        .receipt-dash-line {
+            border: 0;
+            border-top: 2px dashed #ddd;
+            margin: 18px 0;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+
+        .receipt-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: bold;
+            min-width: 130px;
+            text-transform: uppercase;
+        }
+
+        .receipt-value {
+            color: #222;
+            font-size: 0.95rem;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .receipt-value.bold {
+            font-weight: 600;
+            color: #000;
+        }
+
+        .receipt-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 5px;
+            gap: 15px;
+        }
+
+        .receipt-total-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .receipt-total-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: right;
+        }
+
+        .receipt-panel {
+            background: #f7f9fb;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .receipt-note {
+            font-size: 0.82rem;
+            color: #777;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .receipt-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .receipt-signature {
+            border-top: 1px solid #999;
+            padding-top: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .receipt-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        /* =========================
+           IMPRESIÓN PROFESIONAL PDF
+        ========================= */
+
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .header,
+            .bottom-nav,
+            #lock-screen,
+            #txt-btn-print,
+            .screen:not(#scr-rec) {
+                display: none !important;
+            }
+
+            #scr-rec {
+                display: block !important;
+                max-width: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .receipt-box {
+                width: 100% !important;
+                max-width: 780px !important;
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                border: 1px solid #ddd !important;
+                padding: 35px !important;
+                page-break-inside: avoid;
+            }
+
+            .receipt-brand {
+                font-size: 1.5rem !important;
+            }
+
+            .receipt-total-value {
+                font-size: 1.6rem !important;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 <div id="lock-screen" style="position: fixed; inset: 0; background: #1F4E79; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px;">
@@ -83,7 +431,6 @@
 
 <!-- VISTA INICIO -->
 <div id="scr-home" class="screen active">
-    <!-- 💱 MÓDULO DE DIVISA CONFIGURABLE -->
     <div class="card" style="padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
         <label id="lbl-currency" style="font-size: 0.85rem; font-weight: bold; color: #555;">Moneda de Trabajo:</label>
         <select id="currency-select" onchange="changeCurrency()" style="width: auto; padding: 6px 12px; font-size: 0.9rem; border-radius: 6px;">
@@ -95,25 +442,61 @@
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card" style="border-top-color:var(--accent)"><div id="txt-kpi-in">Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
-        <div class="kpi-card" style="border-top-color:var(--danger)"><div id="txt-kpi-out">Gastos</div><div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--accent)">
+            <div id="txt-kpi-in">Ingresos</div>
+            <div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color:var(--danger)">
+            <div id="txt-kpi-out">Gastos</div>
+            <div id="res-out" style="color:var(--danger); font-weight:bold;">$ 0</div>
+        </div>
     </div>
+
     <div class="kpi-grid">
-        <div class="kpi-card" style="border-top-color:var(--warning)"><div id="txt-kpi-deu">Deudas</div><div id="res-deuda" style="color:var(--warning); font-weight:bold;">$ 0</div></div>
-        <div class="kpi-card" style="border-top-color:var(--primary)"><div id="txt-kpi-net">Saldo Neto</div><div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div></div>
+        <div class="kpi-card" style="border-top-color:var(--warning)">
+            <div id="txt-kpi-deu">Deudas</div>
+            <div id="res-deuda" style="color:var(--warning); font-weight:bold;">$ 0</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color:var(--primary)">
+            <div id="txt-kpi-net">Saldo Neto</div>
+            <div id="res-net" style="color:var(--primary); font-weight:bold;">$ 0</div>
+        </div>
     </div>
-    <button id="txt-btn-excel" onclick="exportarExcelFinal()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
+
+    <button id="txt-btn-excel" onclick="exportarExcelFinal()" class="btn btn-excel">
+        📊 Descargar Reporte Profesional
+    </button>
 </div>
 
 <!-- VISTA AGREGAR / EDITAR -->
 <div id="scr-add" class="screen">
     <div class="card">
         <input type="hidden" id="edit-index" value="-1">
-        <div class="form-group"><label id="lbl-ter">Tercero</label><input type="text" id="ter"></div>
-        <div class="form-group"><label id="lbl-nit">NIT / CC</label><input type="text" id="nit"></div>
-        <div class="form-group"><label id="lbl-des">Concepto</label><input type="text" id="desc"></div>
-        <div class="form-group"><label id="lbl-amt">Monto</label><input type="number" id="amt"></div>
-        <div class="form-group"><label id="lbl-typ">Tipo</label>
+
+        <div class="form-group">
+            <label id="lbl-ter">Tercero</label>
+            <input type="text" id="ter">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-nit">NIT / CC</label>
+            <input type="text" id="nit">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-des">Concepto</label>
+            <input type="text" id="desc">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-amt">Monto</label>
+            <input type="number" id="amt">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-typ">Tipo</label>
             <select id="type" onchange="toggleAbonoLogic()">
                 <option value="in" id="opt-in">Ingreso (+)</option>
                 <option value="out" id="opt-out">Gasto (-)</option>
@@ -121,44 +504,67 @@
                 <option value="deu_down" id="opt-deu-down">Deuda (Disminuir -)</option>
             </select>
         </div>
-        
+
         <div class="checkbox-group" id="deuda-up-logic" style="display:none;">
             <input type="checkbox" id="chk-sumar-ingreso">
-            <label id="lbl-sumar" style="font-size:0.8rem; cursor:pointer;">¿Sumar a los Ingresos Actuales?</label>
-        </div>
-        <div class="checkbox-group" id="deuda-down-logic" style="display:none;">
-            <input type="checkbox" id="chk-afectar-saldo">
-            <label id="lbl-afectar" style="font-size:0.8rem; cursor:pointer;">¿Descontar del Saldo Actual?</label>
+            <label id="lbl-sumar" style="font-size:0.8rem; cursor:pointer;">
+                ¿Sumar a los Ingresos Actuales?
+            </label>
         </div>
 
-        <button id="btn-save" onclick="saveData()" class="btn btn-primary">✅ Guardar Registro</button>
+        <div class="checkbox-group" id="deuda-down-logic" style="display:none;">
+            <input type="checkbox" id="chk-afectar-saldo">
+            <label id="lbl-afectar" style="font-size:0.8rem; cursor:pointer;">
+                ¿Descontar del Saldo Actual?
+            </label>
+        </div>
+
+        <button id="btn-save" onclick="saveData()" class="btn btn-primary">
+            ✅ Guardar Registro
+        </button>
     </div>
 </div>
 
 <!-- VISTA HISTORIAL -->
-<div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
+<div id="scr-hist" class="screen">
+    <div class="card" id="hist-list"></div>
+</div>
 
 <!-- VISTA RECIBO -->
 <div id="scr-rec" class="screen">
     <div class="receipt-box" id="rec-box"></div>
-    <button id="txt-btn-print" onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir</button>
+
+    <button id="txt-btn-print" onclick="descargarReciboPDF()" class="btn" style="background:var(--accent)">
+        📄 Descargar recibo en PDF
+    </button>
 </div>
 
 <!-- NAVEGACIÓN INFERIOR -->
 <nav class="bottom-nav">
-    <button class="nav-item active" onclick="nav('scr-home', this)">🏠<br><span id="txt-nav-home">Inicio</span></button>
-    <button class="nav-item" onclick="nav('scr-add', this)">➕<br><span id="txt-nav-add">Nuevo</span></button>
-    <button class="nav-item" onclick="nav('scr-hist', this)">📜<br><span id="txt-nav-hist">Historial</span></button>
-    <button class="nav-item" onclick="nav('scr-rec', this)">📑<br><span id="txt-nav-rec">Recibo</span></button>
+    <button class="nav-item active" onclick="nav('scr-home', this)">
+        🏠<br><span id="txt-nav-home">Inicio</span>
+    </button>
+
+    <button class="nav-item" onclick="nav('scr-add', this)">
+        ➕<br><span id="txt-nav-add">Nuevo</span>
+    </button>
+
+    <button class="nav-item" onclick="nav('scr-hist', this)">
+        📜<br><span id="txt-nav-hist">Historial</span>
+    </button>
+
+    <button class="nav-item" onclick="nav('scr-rec', this)">
+        📑<br><span id="txt-nav-rec">Recibo</span>
+    </button>
 </nav>
 
 <script>
-    const CLAVE_MAESTRA = "FREDDY2026"; 
+    const CLAVE_MAESTRA = "FREDDY2026";
+
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
     let currentLang = localStorage.getItem('app_lang') || 'es';
     let currentCurrency = localStorage.getItem('app_currency') || 'COP';
 
-    // Configuración formal de formateo contable según divisa
     const currencyConfigs = {
         COP: { locale: 'es-CO', symbol: '$', name: 'COP' },
         USD: { locale: 'en-US', symbol: '$', name: 'USD' },
@@ -168,27 +574,107 @@
 
     const translations = {
         es: {
-            title: "MI FINANZAS PRO", lock: "Acceso Seguro", act: "ACTIVAR", in: "Ingresos", out: "Gastos", deu: "Deudas", net: "Saldo Neto",
-            excel: "📊 Descargar Reporte Profesional", ter: "Tercero / Cliente", nit: "Identificación", des: "Concepto", amt: "Monto", typ: "Tipo",
-            optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
-            sumar: "¿Sumar a los Ingresos Actuales?", afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
-            home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
-            date: "FECHA", client: "TERCERO / CLIENTE", detail: "CONCEPTO", type: "TIPO MOVIMIENTO", amount: "MONTO TOTAL", taxId: "NIT / CÉDULA", lblCur: "Moneda de Trabajo:"
+            title: "MI FINANZAS PRO",
+            lock: "Acceso Seguro",
+            act: "ACTIVAR",
+            in: "Ingresos",
+            out: "Gastos",
+            deu: "Deudas",
+            net: "Saldo Neto",
+            excel: "📊 Descargar Reporte Profesional",
+            ter: "Tercero / Cliente",
+            nit: "Identificación",
+            des: "Concepto",
+            amt: "Monto",
+            typ: "Tipo",
+            optIn: "Ingreso (+)",
+            optOut: "Gasto (-)",
+            optDeuUp: "Deuda (Aumentar +)",
+            optDeuDown: "Deuda (Disminuir -)",
+            sumar: "¿Sumar a los Ingresos Actuales?",
+            afectar: "¿Descontar del Saldo Actual?",
+            save: "✅ Guardar Registro",
+            update: "🔄 Actualizar Registro",
+            home: "Inicio",
+            add: "Nuevo",
+            hist: "Historial",
+            rec: "Recibo",
+            share: "📄 Descargar recibo en PDF",
+            empty: "Sin datos.",
+            date: "FECHA",
+            client: "TERCERO / CLIENTE",
+            detail: "CONCEPTO",
+            type: "TIPO MOVIMIENTO",
+            amount: "MONTO TOTAL",
+            taxId: "NIT / CÉDULA",
+            lblCur: "Moneda de Trabajo:",
+            generated: "Comprobante generado automáticamente",
+            internalSupport: "Este comprobante fue generado por Mi Finanzas Pro como soporte interno del movimiento registrado.",
+            signatureReceived: "Firma / Recibido",
+            signatureResponsible: "Responsable",
+            digitalReceipt: "Comprobante digital",
+            noReceipt: "No hay recibo para descargar.",
+            popupBlocked: "El navegador bloqueó la ventana emergente. Permite pop-ups para descargar el PDF.",
+            incomeName: "Ingreso",
+            expenseName: "Gasto",
+            debtUpName: "Deuda aumentada",
+            debtDownName: "Deuda disminuida"
         },
         en: {
-            title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
-            excel: "📊 Download Professional Report", ter: "Client / Third Party", nit: "ID Number", des: "Concept", amt: "Amount", typ: "Type",
-            optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
-            sumar: "Add to Current Incomes?", afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
-            home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
-            date: "DATE", client: "CLIENT / THIRD PARTY", detail: "DETAIL", type: "TRANSACTION TYPE", amount: "TOTAL AMOUNT", taxId: "TAX ID / ID", lblCur: "Working Currency:"
+            title: "MY FINANCES PRO",
+            lock: "Secure Access",
+            act: "ACTIVATE",
+            in: "Incomes",
+            out: "Expenses",
+            deu: "Debts",
+            net: "Balance",
+            excel: "📊 Download Professional Report",
+            ter: "Client / Third Party",
+            nit: "ID Number",
+            des: "Concept",
+            amt: "Amount",
+            typ: "Type",
+            optIn: "Income (+)",
+            optOut: "Expense (-)",
+            optDeuUp: "Debt (Increase +)",
+            optDeuDown: "Debt (Decrease -)",
+            sumar: "Add to Current Incomes?",
+            afectar: "Deduct from Current Balance?",
+            save: "✅ Save Record",
+            update: "🔄 Update Record",
+            home: "Home",
+            add: "Add",
+            hist: "History",
+            rec: "Receipt",
+            share: "📄 Download PDF Receipt",
+            empty: "No data.",
+            date: "DATE",
+            client: "CLIENT / THIRD PARTY",
+            detail: "DETAIL",
+            type: "TRANSACTION TYPE",
+            amount: "TOTAL AMOUNT",
+            taxId: "TAX ID / ID",
+            lblCur: "Working Currency:",
+            generated: "Automatically generated receipt",
+            internalSupport: "This receipt was generated by My Finances Pro as internal support for the registered transaction.",
+            signatureReceived: "Signature / Received",
+            signatureResponsible: "Responsible",
+            digitalReceipt: "Digital receipt",
+            noReceipt: "No receipt to download.",
+            popupBlocked: "The browser blocked the popup. Please allow pop-ups to download the PDF.",
+            incomeName: "Income",
+            expenseName: "Expense",
+            debtUpName: "Debt increased",
+            debtDownName: "Debt decreased"
         }
     };
 
-    // Función unificada para formatear dinero respetando la divisa de trabajo
     function formatMoney(amount) {
         const config = currencyConfigs[currentCurrency];
-        return `${config.symbol} ${amount.toLocaleString(config.locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+        return `${config.symbol} ${amount.toLocaleString(config.locale, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
     }
 
     function changeCurrency() {
@@ -196,11 +682,15 @@
         localStorage.setItem('app_currency', currentCurrency);
         updateUI();
         renderHist();
-        if(document.getElementById('scr-rec').classList.contains('active')) renderLastReceipt();
+
+        if (document.getElementById('scr-rec').classList.contains('active')) {
+            renderLastReceipt();
+        }
     }
 
     function applyLang() {
         const t = translations[currentLang];
+
         document.getElementById('app-title').innerText = t.title;
         document.getElementById('txt-lock-title').innerText = t.lock;
         document.getElementById('txt-lock-btn').innerText = t.act;
@@ -227,20 +717,29 @@
         document.getElementById('txt-btn-print').innerText = t.share;
         document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
-        document.getElementById('btn-save').innerText = document.getElementById('edit-index').value === "-1" ? t.save : t.update;
+
+        document.getElementById('btn-save').innerText =
+            document.getElementById('edit-index').value === "-1" ? t.save : t.update;
     }
 
     function toggleLang() {
         currentLang = currentLang === 'es' ? 'en' : 'es';
         localStorage.setItem('app_lang', currentLang);
         applyLang();
-        if(document.getElementById('scr-rec').classList.contains('active')) renderLastReceipt();
+
+        if (document.getElementById('scr-rec').classList.contains('active')) {
+            renderLastReceipt();
+        }
     }
 
     function toggleAbonoLogic() {
         const type = document.getElementById('type').value;
-        document.getElementById('deuda-up-logic').style.display = type === 'deu_up' ? 'flex' : 'none';
-        document.getElementById('deuda-down-logic').style.display = type === 'deu_down' ? 'flex' : 'none';
+
+        document.getElementById('deuda-up-logic').style.display =
+            type === 'deu_up' ? 'flex' : 'none';
+
+        document.getElementById('deuda-down-logic').style.display =
+            type === 'deu_down' ? 'flex' : 'none';
     }
 
     function validarPin() {
@@ -248,35 +747,60 @@
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
             updateUI();
-        } else { alert(currentLang === 'es' ? "PIN Incorrecto" : "Incorrect PIN"); }
+        } else {
+            alert(currentLang === 'es' ? "PIN Incorrecto" : "Incorrect PIN");
+        }
     }
 
     function nav(id, el) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        if(el) el.classList.add('active');
-        if(id === 'scr-hist') renderHist();
-        if(id === 'scr-rec') renderLastReceipt();
+
+        if (el) {
+            el.classList.add('active');
+        }
+
+        if (id === 'scr-hist') {
+            renderHist();
+        }
+
+        if (id === 'scr-rec') {
+            renderLastReceipt();
+        }
+
         updateUI();
     }
 
     function saveData() {
         const idx = document.getElementById('edit-index').value;
-        const entry = { 
-            ter: document.getElementById('ter').value, 
-            nit: document.getElementById('nit').value || 'N/A', 
-            desc: document.getElementById('desc').value || 'Sin concepto', 
-            amt: parseFloat(document.getElementById('amt').value), 
-            type: document.getElementById('type').value, 
+
+        const entry = {
+            ter: document.getElementById('ter').value,
+            nit: document.getElementById('nit').value || 'N/A',
+            desc: document.getElementById('desc').value || 'Sin concepto',
+            amt: parseFloat(document.getElementById('amt').value),
+            type: document.getElementById('type').value,
             afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
-            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
+            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date
         };
-        if(!entry.ter || isNaN(entry.amt)) return alert(currentLang === 'es' ? "Datos Incompletos" : "Incomplete Data");
-        if(idx === "-1") db.push(entry); else db[idx] = entry;
+
+        if (!entry.ter || isNaN(entry.amt)) {
+            return alert(currentLang === 'es' ? "Datos Incompletos" : "Incomplete Data");
+        }
+
+        if (idx === "-1") {
+            db.push(entry);
+        } else {
+            db[idx] = entry;
+        }
+
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
-        updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
+        updateUI();
+        limpiarForm();
+        nav('scr-home', document.querySelector('.nav-item'));
     }
 
     function limpiarForm() {
@@ -288,18 +812,36 @@
         document.getElementById('type').value = "in";
         document.getElementById('chk-afectar-saldo').checked = false;
         document.getElementById('chk-sumar-ingreso').checked = false;
+
         toggleAbonoLogic();
         applyLang();
     }
 
     function updateUI() {
-        let i = 0, g = 0, d = 0;
-        db.forEach(item => { 
-            if(item.type == 'in') i += item.amt; 
-            else if(item.type == 'out') g += item.amt; 
-            else if(item.type == 'deu_up') { d += item.amt; if(item.sumarIngreso) i += item.amt; }
-            else if(item.type == 'deu_down') { d -= item.amt; if(item.afectarSaldo) g += item.amt; }
+        let i = 0;
+        let g = 0;
+        let d = 0;
+
+        db.forEach(item => {
+            if (item.type == 'in') {
+                i += item.amt;
+            } else if (item.type == 'out') {
+                g += item.amt;
+            } else if (item.type == 'deu_up') {
+                d += item.amt;
+
+                if (item.sumarIngreso) {
+                    i += item.amt;
+                }
+            } else if (item.type == 'deu_down') {
+                d -= item.amt;
+
+                if (item.afectarSaldo) {
+                    g += item.amt;
+                }
+            }
         });
+
         document.getElementById('res-in').innerText = formatMoney(i);
         document.getElementById('res-out').innerText = formatMoney(g);
         document.getElementById('res-deuda').innerText = formatMoney(d);
@@ -308,19 +850,51 @@
 
     function renderHist() {
         const list = document.getElementById('hist-list');
-        list.innerHTML = db.length ? "" : `<p style='text-align:center;'>${translations[currentLang].empty}</p>`;
+
+        list.innerHTML = db.length
+            ? ""
+            : `<p style='text-align:center;'>${translations[currentLang].empty}</p>`;
+
         db.slice().reverse().forEach((d, index) => {
             const actualIndex = db.length - 1 - index;
+
             let color = 'var(--primary)';
-            if(d.type === 'in') color = 'var(--accent)';
-            if(d.type === 'out') color = 'var(--danger)';
-            if(d.type.startsWith('deu')) color = 'var(--warning)';
-            list.innerHTML += `<div class="transaction-item"><div><small>${d.date}</small><br><b>${d.ter}</b></div><div style="text-align:right;"><div style="color:${color}; font-weight:bold;">${formatMoney(d.amt)}</div><button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button><button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button></div></div>`;
+
+            if (d.type === 'in') {
+                color = 'var(--accent)';
+            }
+
+            if (d.type === 'out') {
+                color = 'var(--danger)';
+            }
+
+            if (d.type.startsWith('deu')) {
+                color = 'var(--warning)';
+            }
+
+            list.innerHTML += `
+                <div class="transaction-item">
+                    <div>
+                        <small>${d.date}</small><br>
+                        <b>${d.ter}</b>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <div style="color:${color}; font-weight:bold;">
+                            ${formatMoney(d.amt)}
+                        </div>
+
+                        <button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button>
+                        <button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button>
+                    </div>
+                </div>
+            `;
         });
     }
 
     function editItem(index) {
         const item = db[index];
+
         document.getElementById('ter').value = item.ter;
         document.getElementById('nit').value = item.nit || '';
         document.getElementById('desc').value = item.desc;
@@ -329,129 +903,287 @@
         document.getElementById('edit-index').value = index;
         document.getElementById('chk-afectar-saldo').checked = item.afectarSaldo || false;
         document.getElementById('chk-sumar-ingreso').checked = item.sumarIngreso || false;
-        toggleAbonoLogic(); nav('scr-add'); applyLang();
+
+        toggleAbonoLogic();
+        nav('scr-add');
+        applyLang();
     }
 
-    function deleteItem(index) { 
-        if(confirm(currentLang === 'es' ? "¿Eliminar registro?" : "Delete record?")) { 
-            db.splice(index, 1); 
-            localStorage.setItem('freddy_db_v11', JSON.stringify(db)); 
-            renderHist(); 
-            updateUI(); 
-        } 
+    function deleteItem(index) {
+        if (confirm(currentLang === 'es' ? "¿Eliminar registro?" : "Delete record?")) {
+            db.splice(index, 1);
+            localStorage.setItem('freddy_db_v11', JSON.stringify(db));
+            renderHist();
+            updateUI();
+        }
     }
 
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
+
         if (!db.length) {
             box.innerHTML = `<p style='text-align:center; color:#888;'>${translations[currentLang].empty}</p>`;
             return;
         }
+
         const last = db[db.length - 1];
         const t = translations[currentLang];
 
-        let tipoTexto = t.optIn, badgeClass = "badge-in";
-        if (last.type === 'out') { tipoTexto = t.optOut; badgeClass = "badge-out"; }
-        else if (last.type === 'deu_up') { tipoTexto = t.optDeuUp; badgeClass = "badge-deu"; }
-        else if (last.type === 'deu_down') { tipoTexto = t.optDeuDown; badgeClass = "badge-deu"; }
+        let tipoTexto = t.optIn;
+        let badgeClass = "badge-in";
+        let movimientoTexto = t.incomeName;
+
+        if (last.type === 'out') {
+            tipoTexto = t.optOut;
+            badgeClass = "badge-out";
+            movimientoTexto = t.expenseName;
+        } else if (last.type === 'deu_up') {
+            tipoTexto = t.optDeuUp;
+            badgeClass = "badge-deu";
+            movimientoTexto = t.debtUpName;
+        } else if (last.type === 'deu_down') {
+            tipoTexto = t.optDeuDown;
+            badgeClass = "badge-deu";
+            movimientoTexto = t.debtDownName;
+        }
+
+        const receiptNumber = "REC-" + String(db.length).padStart(5, "0");
 
         box.innerHTML = `
-            <div class="receipt-header">
-                <span class="receipt-brand">${t.title}</span>
-                <span class="receipt-badge ${badgeClass}">${tipoTexto.replace(/[()+\-]/g, '').trim()}</span>
+            <div style="border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 22px;">
+                <div class="receipt-header">
+                    <div>
+                        <div class="receipt-brand">${t.title}</div>
+                        <div class="receipt-subtitle">${t.generated}</div>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <span class="receipt-badge ${badgeClass}">${movimientoTexto}</span>
+                        <div style="font-size:0.8rem; color:#777; margin-top:8px;">
+                            Nº ${receiptNumber}
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="receipt-line"></div>
-            
+
+            <div class="receipt-panel">
+                <div class="receipt-row">
+                    <span class="receipt-label">${t.date}:</span>
+                    <span class="receipt-value">${last.date}</span>
+                </div>
+
+                <div class="receipt-row" style="margin-bottom:0;">
+                    <span class="receipt-label">${t.type}:</span>
+                    <span class="receipt-value bold">${tipoTexto}</span>
+                </div>
+            </div>
+
             <div class="receipt-row">
                 <span class="receipt-label">${t.client}:</span>
                 <span class="receipt-value bold">${last.ter}</span>
             </div>
-            
+
             <div class="receipt-row">
                 <span class="receipt-label">${t.taxId}:</span>
                 <span class="receipt-value">${last.nit || 'N/A'}</span>
             </div>
-            
+
             <div class="receipt-row">
                 <span class="receipt-label">${t.detail}:</span>
                 <span class="receipt-value">${last.desc}</span>
             </div>
-            
-            <div class="receipt-row">
-                <span class="receipt-label">${t.type}:</span>
-                <span class="receipt-value">${tipoTexto}</span>
-            </div>
-            
-            <div class="receipt-row">
-                <span class="receipt-label">${t.date}:</span>
-                <span class="receipt-value">${last.date}</span>
-            </div>
-            
+
             <div class="receipt-dash-line"></div>
-            
+
             <div class="receipt-total-row">
                 <span class="receipt-total-label">${t.amount}:</span>
-                <span class="receipt-total-value">${formatMoney(last.amt)} <small style="font-size:0.8rem; color:#666;">(${currentCurrency})</small></span>
+                <span class="receipt-total-value">
+                    ${formatMoney(last.amt)}
+                    <small style="font-size:0.8rem; color:#666;">${currentCurrency}</small>
+                </span>
+            </div>
+
+            <div style="margin-top:35px; padding-top:20px; border-top:1px solid #eee;">
+                <p class="receipt-note">
+                    ${t.internalSupport}
+                </p>
+
+                <div class="receipt-signatures">
+                    <div class="receipt-signature">
+                        ${t.signatureReceived}
+                    </div>
+
+                    <div class="receipt-signature">
+                        ${t.signatureResponsible}
+                    </div>
+                </div>
+            </div>
+
+            <div class="receipt-footer">
+                © 2026 Mi Finanzas Pro · ${t.digitalReceipt}
             </div>
         `;
     }
 
     function exportarExcelFinal() {
-        if(!db.length) { 
-            alert(currentLang === 'es' ? "No hay datos para exportar." : "No data to export."); 
-            return; 
+        if (!db.length) {
+            alert(currentLang === 'es'
+                ? "No hay datos para exportar."
+                : "No data to export."
+            );
+            return;
         }
+
         const t = translations[currentLang];
         const conf = currencyConfigs[currentCurrency];
-        
-        let html = `<table border="1">
-            <tr>
-                <th colspan="6" style="background:#1F4E79; color:white; font-size:16px; padding:10px; text-align:center; font-family:'Segoe UI',sans-serif;">
-                    ${t.title} - REPORTE GERENCIAL (${conf.name})
-                </th>
-            </tr>
-            <tr style="background:#2E75B6; color:white; font-weight:bold; text-align:center;">
-                <th style="padding:5px;">${t.date}</th>
-                <th style="padding:5px;">${t.client}</th>
-                <th style="padding:5px;">${t.taxId}</th>
-                <th style="padding:5px;">${t.detail}</th>
-                <th style="padding:5px;">${t.type}</th>
-                <th style="padding:5px;">${t.amount}</th>
-            </tr>`;
-            
+
+        let html = `
+            <table border="1">
+                <tr>
+                    <th colspan="6" style="background:#1F4E79; color:white; font-size:16px; padding:10px; text-align:center; font-family:'Segoe UI',sans-serif;">
+                        ${t.title} - REPORTE GERENCIAL (${conf.name})
+                    </th>
+                </tr>
+
+                <tr style="background:#2E75B6; color:white; font-weight:bold; text-align:center;">
+                    <th style="padding:5px;">${t.date}</th>
+                    <th style="padding:5px;">${t.client}</th>
+                    <th style="padding:5px;">${t.taxId}</th>
+                    <th style="padding:5px;">${t.detail}</th>
+                    <th style="padding:5px;">${t.type}</th>
+                    <th style="padding:5px;">${t.amount}</th>
+                </tr>
+        `;
+
         db.forEach(i => {
             let tipoLegible = i.type;
-            if (i.type === 'in') tipoLegible = t.optIn;
-            else if (i.type === 'out') tipoLegible = t.optOut;
-            else if (i.type === 'deu_up') tipoLegible = t.optDeuUp;
-            else if (i.type === 'deu_down') tipoLegible = t.optDeuDown;
 
-            html += `<tr>
-                <td style="text-align:center;">${i.date}</td>
-                <td>${i.ter}</td>
-                <td style="text-align:center;">${i.nit || 'N/A'}</td>
-                <td>${i.desc}</td>
-                <td style="text-align:center;">${tipoLegible.replace(/[()+\-]/g, '').trim()}</td>
-                <td style="text-align:right; font-weight:bold;">${conf.symbol} ${i.amt.toLocaleString(conf.locale)}</td>
-            </tr>`;
+            if (i.type === 'in') {
+                tipoLegible = t.optIn;
+            } else if (i.type === 'out') {
+                tipoLegible = t.optOut;
+            } else if (i.type === 'deu_up') {
+                tipoLegible = t.optDeuUp;
+            } else if (i.type === 'deu_down') {
+                tipoLegible = t.optDeuDown;
+            }
+
+            html += `
+                <tr>
+                    <td style="text-align:center;">${i.date}</td>
+                    <td>${i.ter}</td>
+                    <td style="text-align:center;">${i.nit || 'N/A'}</td>
+                    <td>${i.desc}</td>
+                    <td style="text-align:center;">${tipoLegible.replace(/[()+\-]/g, '').trim()}</td>
+                    <td style="text-align:right; font-weight:bold;">${conf.symbol} ${i.amt.toLocaleString(conf.locale)}</td>
+                </tr>
+            `;
         });
-        
+
         html += "</table>";
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+
+        const blob = new Blob([html], {
+            type: 'application/vnd.ms-excel'
+        });
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `MiFinanzasPro_Reporte_${conf.name}.xls`; a.click();
+
+        a.href = url;
+        a.download = `MiFinanzasPro_Reporte_${conf.name}.xls`;
+        a.click();
+
+        URL.revokeObjectURL(url);
     }
 
-    // Inicialización del sistema cargando divisa e idioma guardados
+    function descargarReciboPDF() {
+        if (!db.length) {
+            alert(translations[currentLang].noReceipt);
+            return;
+        }
+
+        renderLastReceipt();
+
+        const receiptContent = document.getElementById('rec-box').innerHTML;
+        const styles = document.querySelector('style').innerHTML;
+
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+
+        if (!printWindow) {
+            alert(translations[currentLang].popupBlocked);
+            return;
+        }
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="${currentLang}">
+            <head>
+                <meta charset="UTF-8">
+                <title>Recibo Mi Finanzas Pro</title>
+
+                <style>
+                    ${styles}
+
+                    body {
+                        background: white;
+                        padding: 30px;
+                        font-family: 'Segoe UI', sans-serif;
+                    }
+
+                    .receipt-box {
+                        max-width: 780px;
+                        margin: 0 auto;
+                        box-shadow: none;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        padding: 35px;
+                    }
+
+                    @page {
+                        size: A4;
+                        margin: 18mm;
+                    }
+
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+
+                        .receipt-box {
+                            border: 1px solid #ddd;
+                            box-shadow: none;
+                        }
+                    }
+                </style>
+            </head>
+
+            <body>
+                <div class="receipt-box">
+                    ${receiptContent}
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.focus();
+                        window.print();
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+    }
+
     document.getElementById('currency-select').value = currentCurrency;
+
     if (localStorage.getItem('app_act_v11') === 'true') {
         document.getElementById('lock-screen').style.display = 'none';
     }
+
     applyLang();
     updateUI();
 </script>
+
 </body>
 </html>
-
