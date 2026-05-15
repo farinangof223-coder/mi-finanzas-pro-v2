@@ -20,7 +20,7 @@
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
-        .screen { display: none; padding: 16px; max-width: 500px; margin: 0 auto; }
+        .screen { display: none; padding: 16px; max-width: 550px; margin: 0 auto; } /* Ampliado para dar más espacio a la interfaz */
         .screen.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -35,7 +35,35 @@
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .btn-edit, .btn-delete { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .checkbox-group { display: none; align-items: center; gap: 10px; margin-top: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff59d; }
-        .receipt-box { background: white; border: 1px solid #333; padding: 20px; font-family: 'Courier New', monospace; text-align: left; }
+        
+        /* 📑 Ventana de Recibo Profesional Ampliada a 550px */
+        .receipt-box { 
+            background: white; 
+            border: none; 
+            padding: 25px; 
+            font-family: 'Segoe UI', sans-serif; 
+            text-align: left; 
+            box-shadow: var(--shadow);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+        .receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .receipt-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 0.5px; }
+        .receipt-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: white; }
+        .badge-in { background-color: var(--accent); }
+        .badge-out { background-color: var(--danger); }
+        .badge-deu { background-color: var(--warning); color: #333; }
+        .receipt-line { border: 0; border-top: 1px solid #eee; margin: 12px 0; }
+        .receipt-dash-line { border: 0; border-top: 2px dashed #ddd; margin: 18px 0; }
+        .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px; }
+        .receipt-label { color: #666; font-size: 0.9rem; font-weight: bold; min-width: 130px; text-transform: uppercase; }
+        .receipt-value { color: #222; font-size: 0.95rem; text-align: right; word-break: break-word; }
+        .receipt-value.bold { font-weight: 600; color: #000; }
+        .receipt-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 5px; }
+        .receipt-total-label { font-size: 1.1rem; font-weight: bold; color: #333; }
+        .receipt-total-value { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -53,6 +81,7 @@
     <h1 id="app-title">MI FINANZAS PRO</h1>
 </div>
 
+<!-- VISTA INICIO -->
 <div id="scr-home" class="screen active">
     <div class="kpi-grid">
         <div class="kpi-card" style="border-top-color:var(--accent)"><div id="txt-kpi-in">Ingresos</div><div id="res-in" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
@@ -65,6 +94,7 @@
     <button id="txt-btn-excel" onclick="exportarExcelFinal()" class="btn btn-excel">📊 Descargar Reporte Profesional</button>
 </div>
 
+<!-- VISTA AGREGAR / EDITAR -->
 <div id="scr-add" class="screen">
     <div class="card">
         <input type="hidden" id="edit-index" value="-1">
@@ -94,13 +124,16 @@
     </div>
 </div>
 
+<!-- VISTA HISTORIAL -->
 <div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
 
+<!-- VISTA RECIBO (COMPROBANTE CONTABLE) -->
 <div id="scr-rec" class="screen">
     <div class="receipt-box" id="rec-box"></div>
     <button id="txt-btn-print" onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir</button>
 </div>
 
+<!-- NAVEGACIÓN INFERIOR -->
 <nav class="bottom-nav">
     <button class="nav-item active" onclick="nav('scr-home', this)">🏠<br><span id="txt-nav-home">Inicio</span></button>
     <button class="nav-item" onclick="nav('scr-add', this)">➕<br><span id="txt-nav-add">Nuevo</span></button>
@@ -120,7 +153,7 @@
             optIn: "Ingreso (+)", optOut: "Gasto (-)", optDeuUp: "Deuda (Aumentar +)", optDeuDown: "Deuda (Disminuir -)", 
             sumar: "¿Sumar a los Ingresos Actuales?", afectar: "¿Descontar del Saldo Actual?", save: "✅ Guardar Registro", update: "🔄 Actualizar Registro",
             home: "Inicio", add: "Nuevo", hist: "Historial", rec: "Recibo", share: "📲 Compartir Comprobante", empty: "Sin datos.",
-            date: "FECHA", client: "TERCERO", detail: "CONCEPTO", type: "TIPO", amount: "MONTO"
+            date: "FECHA", client: "TERCERO / CLIENTE", detail: "CONCEPTO", type: "TIPO MOVIMIENTO", amount: "MONTO TOTAL", taxId: "NIT / CÉDULA"
         },
         en: {
             title: "MY FINANCES PRO", lock: "Secure Access", act: "ACTIVATE", in: "Incomes", out: "Expenses", deu: "Debts", net: "Balance",
@@ -128,7 +161,7 @@
             optIn: "Income (+)", optOut: "Expense (-)", optDeuUp: "Debt (Increase +)", optDeuDown: "Debt (Decrease -)", 
             sumar: "Add to Current Incomes?", afectar: "Deduct from Current Balance?", save: "✅ Save Record", update: "🔄 Update Record",
             home: "Home", add: "Add", hist: "History", rec: "Receipt", share: "📲 Share Receipt", empty: "No data.",
-            date: "DATE", client: "CLIENT", detail: "DETAIL", type: "TYPE", amount: "AMOUNT"
+            date: "DATE", client: "CLIENT / THIRD PARTY", detail: "DETAIL", type: "TRANSACTION TYPE", amount: "TOTAL AMOUNT", taxId: "TAX ID / ID"
         }
     };
 
@@ -166,6 +199,7 @@
         currentLang = currentLang === 'es' ? 'en' : 'es';
         localStorage.setItem('app_lang', currentLang);
         applyLang();
+        if(document.getElementById('scr-rec').classList.contains('active')) renderLastReceipt();
     }
 
     function toggleAbonoLogic() {
@@ -179,7 +213,7 @@
             document.getElementById('lock-screen').style.display = 'none';
             localStorage.setItem('app_act_v11', 'true');
             updateUI();
-        } else { alert("PIN Incorrecto"); }
+        } else { alert(currentLang === 'es' ? "PIN Incorrecto" : "Incorrect PIN"); }
     }
 
     function nav(id, el) {
@@ -195,17 +229,32 @@
     function saveData() {
         const idx = document.getElementById('edit-index').value;
         const entry = { 
-            ter: document.getElementById('ter').value, nit: document.getElementById('nit').value, 
-            desc: document.getElementById('desc').value, amt: parseFloat(document.getElementById('amt').value), 
+            ter: document.getElementById('ter').value, 
+            nit: document.getElementById('nit').value || 'N/A', 
+            desc: document.getElementById('desc').value || 'Sin concepto', 
+            amt: parseFloat(document.getElementById('amt').value), 
             type: document.getElementById('type').value, 
             afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date 
         };
-        if(!entry.ter || isNaN(entry.amt)) return alert("Incomplete Data");
+        if(!entry.ter || isNaN(entry.amt)) return alert(currentLang === 'es' ? "Datos Incompletos" : "Incomplete Data");
         if(idx === "-1") db.push(entry); else db[idx] = entry;
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
         updateUI(); limpiarForm(); nav('scr-home', document.querySelector('.nav-item'));
+    }
+
+    function limpiarForm() {
+        document.getElementById('edit-index').value = "-1";
+        document.getElementById('ter').value = "";
+        document.getElementById('nit').value = "";
+        document.getElementById('desc').value = "";
+        document.getElementById('amt').value = "";
+        document.getElementById('type').value = "in";
+        document.getElementById('chk-afectar-saldo').checked = false;
+        document.getElementById('chk-sumar-ingreso').checked = false;
+        toggleAbonoLogic();
+        applyLang();
     }
 
     function updateUI() {
@@ -238,7 +287,7 @@
     function editItem(index) {
         const item = db[index];
         document.getElementById('ter').value = item.ter;
-        document.getElementById('nit').value = item.nit;
+        document.getElementById('nit').value = item.nit || '';
         document.getElementById('desc').value = item.desc;
         document.getElementById('amt').value = item.amt;
         document.getElementById('type').value = item.type;
@@ -248,62 +297,98 @@
         toggleAbonoLogic(); nav('scr-add'); applyLang();
     }
 
-    function deleteItem(index) { if(confirm("?")) { db.splice(index, 1); localStorage.setItem('freddy_db_v11', JSON.stringify(db)); renderHist(); updateUI(); } }
+    function deleteItem(index) { 
+        if(confirm(currentLang === 'es' ? "¿Eliminar registro?" : "Delete record?")) { 
+            db.splice(index, 1); 
+            localStorage.setItem('freddy_db_v11', JSON.stringify(db)); 
+            renderHist(); 
+            updateUI(); 
+        } 
+    }
 
+    /* 📊 CAMBIO INTEGRADO: Renderizado de los 5 datos clave en Recibo Ampliado */
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
-        if (!db.length) return;
+        if (!db.length) {
+            box.innerHTML = `<p style='text-align:center; color:#888;'>${translations[currentLang].empty}</p>`;
+            return;
+        }
         const last = db[db.length - 1];
-        box.innerHTML = `<h3 style="text-align:center; border-bottom:2px solid #000;">${translations[currentLang].title}</h3><p><b>FECHA:</b> ${last.date}</p><p><b>TERCERO:</b> ${last.ter.toUpperCase()}</p><hr><p style="font-size:1.2rem; text-align:center;"><b>TOTAL: $${last.amt.toLocaleString()}</b></p>`;
+        const t = translations[currentLang];
+
+        // Mapear dinámicamente el badge de tipo contable según el movimiento
+        let tipoTexto = t.optIn, badgeClass = "badge-in";
+        if (last.type === 'out') { tipoTexto = t.optOut; badgeClass = "badge-out"; }
+        else if (last.type === 'deu_up') { tipoTexto = t.optDeuUp; badgeClass = "badge-deu"; }
+        else if (last.type === 'deu_down') { tipoTexto = t.optDeuDown; badgeClass = "badge-deu"; }
+
+        box.innerHTML = `
+            <div class="receipt-header">
+                <span class="receipt-brand">${t.title}</span>
+                <span class="receipt-badge ${badgeClass}">${tipoTexto.replace(/[()+\-]/g, '').trim()}</span>
+            </div>
+            
+            <div class="receipt-line"></div>
+            
+            <div class="receipt-row">
+                <span class="receipt-label">${t.client}:</span>
+                <span class="receipt-value bold">${last.ter}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span class="receipt-label">${t.taxId}:</span>
+                <span class="receipt-value">${last.nit || 'N/A'}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span class="receipt-label">${t.detail}:</span>
+                <span class="receipt-value">${last.desc}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span class="receipt-label">${t.type}:</span>
+                <span class="receipt-value">${tipoTexto}</span>
+            </div>
+            
+            <div class="receipt-row">
+                <span class="receipt-label">${t.date}:</span>
+                <span class="receipt-value">${last.date}</span>
+            </div>
+            
+            <div class="receipt-dash-line"></div>
+            
+            <div class="receipt-total-row">
+                <span class="receipt-total-label">${t.amount}:</span>
+                <span class="receipt-total-value">$ ${last.amt.toLocaleString()}</span>
+            </div>
+        `;
     }
 
-    // --- FUNCIÓN MAESTRA DE EXCEL (FORMATO TABLA HTML) ---
     function exportarExcelFinal() {
-        const t = translations[currentLang];
-        let table = `<table border="1">
-            <tr><th colspan="5" style="background:#1F4E79; color:white;">${t.title} - REPORTE OFICIAL</th></tr>
-            <tr>
-                <th style="background:#eee;">${t.date}</th>
-                <th style="background:#eee;">${t.client}</th>
-                <th style="background:#eee;">${t.detail}</th>
-                <th style="background:#eee;">${t.type}</th>
-                <th style="background:#eee;">${t.amount}</th>
-            </tr>`;
-        
+        if(!db.length) { alert(currentLang === 'es' ? "No hay datos" : "No data"); return; }
+        let html = `<table border="1"><tr style="background:#1F4E79; color:white;">
+            <th>Fecha</th><th>Tercero</th><th>NIT/CC</th><th>Concepto</th><th>Monto</th><th>Tipo</th>
+        </tr>`;
         db.forEach(i => {
-            table += `<tr>
-                <td>${i.date}</td>
-                <td>${i.ter.toUpperCase()}</td>
-                <td>${i.desc.toUpperCase()}</td>
-                <td>${i.type.toUpperCase()}</td>
-                <td>${i.amt}</td>
+            html += `<tr>
+                <td>${i.date}</td><td>${i.ter}</td><td>${i.nit || 'N/A'}</td>
+                <td>${i.desc}</td><td>${i.amt}</td><td>${i.type}</td>
             </tr>`;
         });
-        table += "</table>";
-
-        const blob = new Blob(['\ufeff', table], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Farinango_Pro.xls"; // Guardar como .xls
-        link.click();
+        html += "</table>";
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'MiFinanzasPro_Reporte.xls'; a.click();
     }
 
-    function limpiarForm() { 
-        document.getElementById('ter').value = ""; document.getElementById('nit').value = "";
-        document.getElementById('desc').value = ""; document.getElementById('amt').value = "";
-        document.getElementById('edit-index').value = "-1";
-        document.getElementById('chk-afectar-saldo').checked = false;
-        document.getElementById('chk-sumar-ingreso').checked = false;
-        toggleAbonoLogic(); applyLang();
+    // Inicialización del sistema con control de sesión por PIN
+    if (localStorage.getItem('app_act_v11') === 'true') {
+        document.getElementById('lock-screen').style.display = 'none';
     }
-
-    window.onload = function() { 
-        applyLang();
-        if (localStorage.getItem('app_act_v11') === 'true') document.getElementById('lock-screen').style.display = 'none'; 
-        updateUI(); 
-    }
+    applyLang();
+    updateUI();
 </script>
 </body>
 </html>
-
 
