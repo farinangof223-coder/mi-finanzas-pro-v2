@@ -20,7 +20,7 @@
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 0.65rem; cursor: pointer; border: none; background: none; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
-        .screen { display: none; padding: 16px; max-width: 550px; margin: 0 auto; } /* Ampliado para dar más espacio a la interfaz */
+        .screen { display: none; padding: 16px; max-width: 550px; margin: 0 auto; }
         .screen.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -127,7 +127,7 @@
 <!-- VISTA HISTORIAL -->
 <div id="scr-hist" class="screen"><div class="card" id="hist-list"></div></div>
 
-<!-- VISTA RECIBO (COMPROBANTE CONTABLE) -->
+<!-- VISTA RECIBO -->
 <div id="scr-rec" class="screen">
     <div class="receipt-box" id="rec-box"></div>
     <button id="txt-btn-print" onclick="window.print()" class="btn" style="background:var(--accent)">📲 Compartir</button>
@@ -306,7 +306,6 @@
         } 
     }
 
-    /* 📊 CAMBIO INTEGRADO: Renderizado de los 5 datos clave en Recibo Ampliado */
     function renderLastReceipt() {
         const box = document.getElementById('rec-box');
         if (!db.length) {
@@ -316,7 +315,6 @@
         const last = db[db.length - 1];
         const t = translations[currentLang];
 
-        // Mapear dinámicamente el badge de tipo contable según el movimiento
         let tipoTexto = t.optIn, badgeClass = "badge-in";
         if (last.type === 'out') { tipoTexto = t.optOut; badgeClass = "badge-out"; }
         else if (last.type === 'deu_up') { tipoTexto = t.optDeuUp; badgeClass = "badge-deu"; }
@@ -365,16 +363,44 @@
     }
 
     function exportarExcelFinal() {
-        if(!db.length) { alert(currentLang === 'es' ? "No hay datos" : "No data"); return; }
-        let html = `<table border="1"><tr style="background:#1F4E79; color:white;">
-            <th>Fecha</th><th>Tercero</th><th>NIT/CC</th><th>Concepto</th><th>Monto</th><th>Tipo</th>
-        </tr>`;
+        if(!db.length) { 
+            alert(currentLang === 'es' ? "No hay datos para exportar." : "No data to export."); 
+            return; 
+        }
+        const t = translations[currentLang];
+        
+        let html = `<table border="1">
+            <tr>
+                <th colspan="6" style="background:#1F4E79; color:white; font-size:16px; padding:10px; text-align:center; font-family:'Segoe UI',sans-serif;">
+                    ${t.title} - REPORTE GERENCIAL
+                </th>
+            </tr>
+            <tr style="background:#2E75B6; color:white; font-weight:bold; text-align:center;">
+                <th style="padding:5px;">${t.date}</th>
+                <th style="padding:5px;">${t.client}</th>
+                <th style="padding:5px;">${t.taxId}</th>
+                <th style="padding:5px;">${t.detail}</th>
+                <th style="padding:5px;">${t.type}</th>
+                <th style="padding:5px;">${t.amount}</th>
+            </tr>`;
+            
         db.forEach(i => {
+            let tipoLegible = i.type;
+            if (i.type === 'in') tipoLegible = t.optIn;
+            else if (i.type === 'out') i.type === 'out' ? tipoLegible = t.optOut : null;
+            else if (i.type === 'deu_up') tipoLegible = t.optDeuUp;
+            else if (i.type === 'deu_down') tipoLegible = t.optDeuDown;
+
             html += `<tr>
-                <td>${i.date}</td><td>${i.ter}</td><td>${i.nit || 'N/A'}</td>
-                <td>${i.desc}</td><td>${i.amt}</td><td>${i.type}</td>
+                <td style="text-align:center;">${i.date}</td>
+                <td>${i.ter}</td>
+                <td style="text-align:center;">${i.nit || 'N/A'}</td>
+                <td>${i.desc}</td>
+                <td style="text-align:center;">${tipoLegible.replace(/[()+\-]/g, '').trim()}</td>
+                <td style="text-align:right; font-weight:bold;">$ ${i.amt.toLocaleString()}</td>
             </tr>`;
         });
+        
         html += "</table>";
         const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
         const url = URL.createObjectURL(blob);
@@ -382,7 +408,6 @@
         a.href = url; a.download = 'MiFinanzasPro_Reporte.xls'; a.click();
     }
 
-    // Inicialización del sistema con control de sesión por PIN
     if (localStorage.getItem('app_act_v11') === 'true') {
         document.getElementById('lock-screen').style.display = 'none';
     }
