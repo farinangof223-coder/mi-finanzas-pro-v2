@@ -233,6 +233,79 @@
             border: 1px solid #e2e6ea;
         }
 
+        .month-picker-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            background: white;
+            color: #222;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .month-picker-field::after {
+            content: "⌄";
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .month-picker-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 12000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .month-picker-card {
+            width: 100%;
+            max-width: 520px;
+            background: #fbfaff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.25);
+        }
+
+        .month-picker-title {
+            font-size: 1.35rem;
+            margin-bottom: 18px;
+            color: #111;
+        }
+
+        .month-picker-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .month-picker-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        .month-picker-action {
+            border: none;
+            background: transparent;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 0.95rem;
+            padding: 10px 0;
+            cursor: pointer;
+        }
+
+
         .history-year-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -731,6 +804,22 @@
     <button id="txt-btn-print" onclick="descargarReciboPDF()" class="btn" style="background:var(--accent)">
         📄 Descargar recibo en PDF
     </button>
+</div>
+
+
+
+<div id="month-picker-overlay" class="month-picker-overlay" onclick="closeMonthPicker(event)">
+    <div class="month-picker-card" onclick="event.stopPropagation()">
+        <div class="month-picker-title" id="month-picker-title">Establecer mes</div>
+        <div class="month-picker-controls">
+            <select id="month-picker-month"></select>
+            <select id="month-picker-year"></select>
+        </div>
+        <div class="month-picker-actions">
+            <button type="button" class="month-picker-action" onclick="hideMonthPicker()">Cancelar</button>
+            <button type="button" class="month-picker-action" onclick="applyMonthPicker()">Establecer</button>
+        </div>
+    </div>
 </div>
 
 <!-- NAVEGACIÓN INFERIOR -->
@@ -1239,6 +1328,95 @@
     }
 
 
+    let monthPickerState = { targetId: null, currentValue: null };
+
+    function getMonthNamesForPicker() {
+        if (currentLang === 'en') {
+            return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        }
+        return ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    }
+
+    function openMonthPicker(targetId, currentValue) {
+        const overlay = document.getElementById('month-picker-overlay');
+        const monthSelect = document.getElementById('month-picker-month');
+        const yearSelect = document.getElementById('month-picker-year');
+        const title = document.getElementById('month-picker-title');
+
+        if (!overlay || !monthSelect || !yearSelect) {
+            return;
+        }
+
+        const safeValue = currentValue || getMonthKeyFromDate(new Date());
+        const [year, month] = safeValue.split('-').map(Number);
+        monthPickerState = { targetId, currentValue: safeValue };
+
+        title.innerText = currentLang === 'es' ? 'Establecer mes' : 'Set month';
+
+        const monthNames = getMonthNamesForPicker();
+        monthSelect.innerHTML = monthNames.map((name, index) => {
+            const value = index + 1;
+            return `<option value="${value}" ${value === month ? 'selected' : ''}>${name}</option>`;
+        }).join('');
+
+        const currentYear = new Date().getFullYear();
+        const years = new Set([currentYear - 1, currentYear, currentYear + 1, year]);
+        getAvailableYears().forEach(y => years.add(y));
+
+        yearSelect.innerHTML = [...years].sort((a, b) => a - b).map(y => {
+            return `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`;
+        }).join('');
+
+        overlay.style.display = 'flex';
+    }
+
+    function hideMonthPicker() {
+        const overlay = document.getElementById('month-picker-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    function closeMonthPicker(event) {
+        if (event && event.target && event.target.id === 'month-picker-overlay') {
+            hideMonthPicker();
+        }
+    }
+
+    function applyMonthPicker() {
+        const monthSelect = document.getElementById('month-picker-month');
+        const yearSelect = document.getElementById('month-picker-year');
+
+        if (!monthSelect || !yearSelect || !monthPickerState.targetId) {
+            hideMonthPicker();
+            return;
+        }
+
+        const month = String(monthSelect.value).padStart(2, '0');
+        const year = yearSelect.value;
+        const monthKey = `${year}-${month}`;
+
+        if (monthPickerState.targetId === 'history') {
+            hideMonthPicker();
+            selectHistoryMonth(monthKey);
+            return;
+        }
+
+        const input = document.getElementById(monthPickerState.targetId);
+        const label = document.getElementById(`${monthPickerState.targetId}-label`);
+
+        if (input) {
+            input.value = monthKey;
+        }
+
+        if (label) {
+            label.innerText = getMonthTitle(monthKey);
+        }
+
+        hideMonthPicker();
+    }
+
+
     function renderFilterOptions(selectedValue) {
         const t = translations[currentLang];
         const options = [
@@ -1351,7 +1529,9 @@
                     <label style="font-size:0.82rem; font-weight:bold; color:var(--primary); text-transform:uppercase;">
                         ${t.selectMonthTitle}
                     </label>
-                    <input type="month" required value="${selectedHistoryMonth}" onchange="if(this.value) selectHistoryMonth(this.value)">
+                    <button type="button" class="month-picker-field" onclick="openMonthPicker('history', selectedHistoryMonth)">
+                        ${getMonthTitle(selectedHistoryMonth)}
+                    </button>
                     <small style="display:block; margin-top:7px; color:#666; font-size:0.78rem;">
                         ${selectedMonthCount} ${t.movementsCount}
                     </small>
@@ -1386,7 +1566,10 @@
                             <div class="month-tools-row">
                                 <div class="form-group">
                                     <label>${t.copyTo}</label>
-                                    <input type="month" required id="copy-target-${monthKey}" value="${targetDefault}">
+                                    <input type="hidden" id="copy-target-${monthKey}" value="${targetDefault}">
+                                    <button type="button" id="copy-target-${monthKey}-label" class="month-picker-field" onclick="openMonthPicker('copy-target-${monthKey}', document.getElementById('copy-target-${monthKey}').value)">
+                                        ${getMonthTitle(targetDefault)}
+                                    </button>
                                 </div>
 
                                 <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
