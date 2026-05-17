@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1F4E79">
-    <title>Mi Finanzas Pro</title>
+    <title>FINANZAS JL</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -214,50 +214,93 @@
            HISTORIAL POR MESES
         ========================= */
 
-        .hist-tools {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .hist-tools-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .hist-help {
-            font-size: 0.78rem;
-            color: #666;
-            line-height: 1.4;
-            background: #f7f9fb;
-            padding: 10px;
-            border-radius: 8px;
+        .hist-intro {
+            background: #ffffff;
+            border-left: 5px solid var(--primary);
+            color: #555;
+            font-size: 0.86rem;
+            line-height: 1.45;
         }
 
         .month-section {
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             overflow: hidden;
-            border-radius: 12px;
-            border: 1px solid #e5e5e5;
+            border-radius: 16px;
+            border: 1px solid #e2e6ea;
             background: white;
+            box-shadow: var(--shadow);
         }
 
         .month-header {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            padding: 12px;
+            padding: 14px 14px 12px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            align-items: center;
+            align-items: flex-start;
             font-weight: bold;
         }
 
+        .month-title {
+            font-size: 1rem;
+            text-transform: capitalize;
+        }
+
         .month-total {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             opacity: 0.95;
             text-align: right;
+            line-height: 1.35;
+        }
+
+        .month-summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+            background: #f7f9fb;
+            border-bottom: 1px solid #edf0f2;
+        }
+
+        .month-summary-item {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 9px;
+            font-size: 0.75rem;
+            border: 1px solid #edf0f2;
+        }
+
+        .month-summary-item b {
+            display: block;
+            margin-top: 3px;
+            font-size: 0.86rem;
+        }
+
+        .month-tools {
+            padding: 12px;
+            background: #ffffff;
+            border-bottom: 1px solid #edf0f2;
+        }
+
+        .month-tools-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .month-copy-btn {
+            margin-top: 0;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .month-empty {
+            text-align: center;
+            padding: 16px;
+            color: #888;
+            font-size: 0.88rem;
         }
 
         .type-pill {
@@ -284,7 +327,8 @@
         }
 
         @media (max-width: 420px) {
-            .hist-tools-row {
+            .month-tools-row,
+            .month-summary-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -507,7 +551,7 @@
 
 <div class="header">
     <button class="lang-switch" onclick="toggleLang()">🇺🇸/🇪🇸 <span id="lang-label">ES</span></button>
-    <h1 id="app-title">MI FINANZAS PRO</h1>
+    <h1 id="app-title">FINANZAS JL</h1>
 </div>
 
 <!-- VISTA INICIO -->
@@ -608,40 +652,11 @@
 
 <!-- VISTA HISTORIAL -->
 <div id="scr-hist" class="screen">
-    <div class="card hist-tools">
-        <div class="form-group">
-            <label id="lbl-hist-filter">Filtrar historial</label>
-            <select id="hist-type-filter" onchange="renderHist()">
-                <option value="all" id="hist-filter-all">Todos los movimientos</option>
-                <option value="in" id="hist-filter-in">Ingresos</option>
-                <option value="out" id="hist-filter-out">Gastos</option>
-                <option value="deu_up" id="hist-filter-deu-up">Deuda aumentar</option>
-                <option value="deu_down" id="hist-filter-deu-down">Deuda disminuir</option>
-            </select>
-        </div>
-
-        <div class="hist-help" id="hist-copy-help">
-            Para gastos que se repiten, selecciona un mes origen, el mes destino y copia los registros sin volverlos a digitar.
-        </div>
-
-        <div class="hist-tools-row">
-            <div class="form-group">
-                <label id="lbl-copy-from">Copiar desde</label>
-                <select id="copy-source-month"></select>
-            </div>
-
-            <div class="form-group">
-                <label id="lbl-copy-to">Pegar en mes</label>
-                <input type="month" id="copy-target-month">
-            </div>
-        </div>
-
-        <button id="btn-copy-month" onclick="copyMonthRecords()" class="btn btn-primary">
-            📋 Copiar mes filtrado
-        </button>
+    <div class="card hist-intro" id="hist-copy-help">
+        Cada mes aparece en un bloque separado. Dentro de cada mes puedes filtrar por tipo de movimiento y copiar los registros repetidos hacia otro mes.
     </div>
 
-    <div class="card" id="hist-list"></div>
+    <div id="hist-list"></div>
 </div>
 
 <!-- VISTA RECIBO -->
@@ -688,7 +703,7 @@
 
     const translations = {
         es: {
-            title: "MI FINANZAS PRO",
+            title: "FINANZAS JL",
             lock: "Acceso Seguro",
             act: "ACTIVAR",
             in: "Ingresos",
@@ -723,7 +738,7 @@
             taxId: "NIT / CÉDULA",
             lblCur: "Moneda de Trabajo:",
             generated: "Comprobante generado automáticamente",
-            internalSupport: "Este comprobante fue generado por Mi Finanzas Pro como soporte interno del movimiento registrado.",
+            internalSupport: "Este comprobante fue generado por FINANZAS JL como soporte interno del movimiento registrado.",
             signatureReceived: "Firma / Recibido",
             signatureResponsible: "Responsable",
             digitalReceipt: "Comprobante digital",
@@ -741,7 +756,7 @@
             autoReport: "Reporte generado automáticamente",
             histFilter: "Filtrar historial",
             allMovements: "Todos los movimientos",
-            copyHelp: "Para gastos que se repiten, selecciona un mes origen, el mes destino y copia los registros sin volverlos a digitar.",
+            copyHelp: "Cada mes aparece en un bloque separado. Dentro de cada mes puedes filtrar por tipo de movimiento y copiar los registros repetidos hacia otro mes.",
             copyFrom: "Copiar desde",
             copyTo: "Pegar en mes",
             copyMonth: "📋 Copiar mes filtrado",
@@ -753,7 +768,7 @@
             copiedFrom: "Copiado desde"
         },
         en: {
-            title: "MY FINANCES PRO",
+            title: "FINANZAS JL",
             lock: "Secure Access",
             act: "ACTIVATE",
             in: "Incomes",
@@ -788,7 +803,7 @@
             taxId: "TAX ID / ID",
             lblCur: "Working Currency:",
             generated: "Automatically generated receipt",
-            internalSupport: "This receipt was generated by My Finances Pro as internal support for the registered transaction.",
+            internalSupport: "This receipt was generated by FINANZAS JL as internal support for the registered transaction.",
             signatureReceived: "Signature / Received",
             signatureResponsible: "Responsible",
             digitalReceipt: "Digital receipt",
@@ -806,7 +821,7 @@
             autoReport: "Automatically generated report",
             histFilter: "Filter history",
             allMovements: "All transactions",
-            copyHelp: "For repeated expenses, select a source month, a target month and copy records without typing them again.",
+            copyHelp: "Each month appears in its own block. Inside each month you can filter by movement type and copy repeated records to another month.",
             copyFrom: "Copy from",
             copyTo: "Paste into month",
             copyMonth: "📋 Copy filtered month",
@@ -868,17 +883,8 @@
         document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
 
-        if (document.getElementById('lbl-hist-filter')) {
-            document.getElementById('lbl-hist-filter').innerText = t.histFilter;
-            document.getElementById('hist-filter-all').innerText = t.allMovements;
-            document.getElementById('hist-filter-in').innerText = t.in;
-            document.getElementById('hist-filter-out').innerText = t.out;
-            document.getElementById('hist-filter-deu-up').innerText = t.optDeuUp;
-            document.getElementById('hist-filter-deu-down').innerText = t.optDeuDown;
+        if (document.getElementById('hist-copy-help')) {
             document.getElementById('hist-copy-help').innerText = t.copyHelp;
-            document.getElementById('lbl-copy-from').innerText = t.copyFrom;
-            document.getElementById('lbl-copy-to').innerText = t.copyTo;
-            document.getElementById('btn-copy-month').innerText = t.copyMonth;
         }
 
         document.getElementById('btn-save').innerText =
@@ -1083,49 +1089,57 @@
         return { label: type, color: 'var(--primary)', pill: 'income' };
     }
 
-    function getCurrentHistoryFilter() {
-        const filter = document.getElementById('hist-type-filter');
-        return filter ? filter.value : 'all';
+    function getMonthFilter(monthKey) {
+        return localStorage.getItem(`hist_filter_${monthKey}`) || 'all';
     }
 
-    function matchesHistoryFilter(item) {
-        const filter = getCurrentHistoryFilter();
-        return filter === 'all' || item.type === filter;
+    function setMonthFilter(monthKey, value) {
+        localStorage.setItem(`hist_filter_${monthKey}`, value);
+        renderHist();
     }
 
-    function populateMonthSelectors() {
-        const sourceSelect = document.getElementById('copy-source-month');
-        const targetInput = document.getElementById('copy-target-month');
+    function matchesHistoryFilter(item, filterValue) {
+        return filterValue === 'all' || item.type === filterValue;
+    }
 
-        if (!sourceSelect || !targetInput) {
-            return;
-        }
+    function getMonthTotals(rows) {
+        const totals = { in: 0, out: 0, deu_up: 0, deu_down: 0 };
 
-        const selected = sourceSelect.value;
-        const months = [...new Set(db.map(item => getMonthKeyFromEntry(item)))]
-            .sort()
-            .reverse();
+        rows.forEach(row => {
+            const item = row.item || row;
+            const amount = Number(item.amt || 0);
 
-        sourceSelect.innerHTML = '';
+            if (item.type === 'in') totals.in += amount;
+            if (item.type === 'out') totals.out += amount;
+            if (item.type === 'deu_up') totals.deu_up += amount;
+            if (item.type === 'deu_down') totals.deu_down += amount;
+        });
 
-        if (!months.length) {
-            sourceSelect.innerHTML = `<option value="">${translations[currentLang].noMonth}</option>`;
-        } else {
-            months.forEach(monthKey => {
-                const option = document.createElement('option');
-                option.value = monthKey;
-                option.textContent = getMonthTitle(monthKey);
-                sourceSelect.appendChild(option);
-            });
+        return totals;
+    }
 
-            if (months.includes(selected)) {
-                sourceSelect.value = selected;
-            }
-        }
+    function getAvailableMonthKeys() {
+        const months = new Set(db.map(item => getMonthKeyFromEntry(item)));
 
-        if (!targetInput.value) {
-            targetInput.value = getMonthKeyFromDate(new Date());
-        }
+        // Mantiene visible el mes actual aunque todavía no tenga registros.
+        months.add(getMonthKeyFromDate(new Date()));
+
+        return [...months].sort().reverse();
+    }
+
+    function renderFilterOptions(selectedValue) {
+        const t = translations[currentLang];
+        const options = [
+            ['all', t.allMovements],
+            ['in', t.in],
+            ['out', t.out],
+            ['deu_up', t.optDeuUp],
+            ['deu_down', t.optDeuDown]
+        ];
+
+        return options.map(([value, label]) => `
+            <option value="${value}" ${selectedValue === value ? 'selected' : ''}>${label}</option>
+        `).join('');
     }
 
     function buildDateForCopiedEntry(originalEntry, targetMonthKey) {
@@ -1145,9 +1159,10 @@
         return copiedDate.toLocaleString();
     }
 
-    function copyMonthRecords() {
-        const sourceMonth = document.getElementById('copy-source-month').value;
-        const targetMonth = document.getElementById('copy-target-month').value;
+    function copyMonthRecords(sourceMonth) {
+        const targetInput = document.getElementById(`copy-target-${sourceMonth}`);
+        const targetMonth = targetInput ? targetInput.value : '';
+        const filterValue = getMonthFilter(sourceMonth);
         const t = translations[currentLang];
 
         if (!sourceMonth) {
@@ -1166,7 +1181,7 @@
         }
 
         const recordsToCopy = db.filter(item =>
-            getMonthKeyFromEntry(item) === sourceMonth && matchesHistoryFilter(item)
+            getMonthKeyFromEntry(item) === sourceMonth && matchesHistoryFilter(item, filterValue)
         );
 
         if (!recordsToCopy.length) {
@@ -1193,70 +1208,109 @@
         const list = document.getElementById('hist-list');
         const t = translations[currentLang];
 
-        populateMonthSelectors();
-
-        const filtered = db
-            .map((item, originalIndex) => ({ item, originalIndex }))
-            .filter(row => matchesHistoryFilter(row.item));
-
-        if (!filtered.length) {
-            list.innerHTML = `<p style='text-align:center;'>${t.empty}</p>`;
+        if (!list) {
             return;
         }
 
         const groups = {};
 
-        filtered.forEach(row => {
-            const monthKey = getMonthKeyFromEntry(row.item);
+        db.forEach((item, originalIndex) => {
+            const monthKey = getMonthKeyFromEntry(item);
 
             if (!groups[monthKey]) {
                 groups[monthKey] = [];
             }
 
-            groups[monthKey].push(row);
+            groups[monthKey].push({ item, originalIndex });
         });
 
-        const sortedMonths = Object.keys(groups).sort().reverse();
+        const monthKeys = getAvailableMonthKeys();
+
+        if (!monthKeys.length) {
+            list.innerHTML = `<div class="card"><p style='text-align:center;'>${t.empty}</p></div>`;
+            return;
+        }
+
         list.innerHTML = '';
 
-        sortedMonths.forEach(monthKey => {
-            const rows = groups[monthKey].sort((a, b) => b.originalIndex - a.originalIndex);
-            const monthTotal = rows.reduce((sum, row) => sum + Number(row.item.amt || 0), 0);
+        monthKeys.forEach(monthKey => {
+            const allRows = (groups[monthKey] || []).sort((a, b) => b.originalIndex - a.originalIndex);
+            const filterValue = getMonthFilter(monthKey);
+            const rows = allRows.filter(row => matchesHistoryFilter(row.item, filterValue));
+            const totals = getMonthTotals(allRows);
+            const visibleTotal = rows.reduce((sum, row) => sum + Number(row.item.amt || 0), 0);
+            const targetDefault = getMonthKeyFromDate(new Date());
 
             let monthHtml = `
                 <div class="month-section">
                     <div class="month-header">
-                        <span>${getMonthTitle(monthKey)}</span>
-                        <span class="month-total">${rows.length} mov. · ${formatMoney(monthTotal)}</span>
+                        <div class="month-title">${getMonthTitle(monthKey)}</div>
+                        <div class="month-total">
+                            ${allRows.length} mov. registrados<br>
+                            Vista actual: ${formatMoney(visibleTotal)}
+                        </div>
+                    </div>
+
+                    <div class="month-summary-grid">
+                        <div class="month-summary-item" style="border-left:4px solid var(--accent);">${t.in}<b>${formatMoney(totals.in)}</b></div>
+                        <div class="month-summary-item" style="border-left:4px solid var(--danger);">${t.out}<b>${formatMoney(totals.out)}</b></div>
+                        <div class="month-summary-item" style="border-left:4px solid var(--warning);">${t.optDeuUp.replace(/[()+\-]/g, '').trim()}<b>${formatMoney(totals.deu_up)}</b></div>
+                        <div class="month-summary-item" style="border-left:4px solid var(--warning);">${t.optDeuDown.replace(/[()+\-]/g, '').trim()}<b>${formatMoney(totals.deu_down)}</b></div>
+                    </div>
+
+                    <div class="month-tools">
+                        <div class="form-group">
+                            <label>${t.histFilter}</label>
+                            <select onchange="setMonthFilter('${monthKey}', this.value)">
+                                ${renderFilterOptions(filterValue)}
+                            </select>
+                        </div>
+
+                        <div class="month-tools-row">
+                            <div class="form-group">
+                                <label>${t.copyTo}</label>
+                                <input type="month" id="copy-target-${monthKey}" value="${targetDefault}">
+                            </div>
+
+                            <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
+                                ${t.copyMonth}
+                            </button>
+                        </div>
                     </div>
             `;
 
-            rows.forEach(({ item: d, originalIndex }) => {
-                const typeData = getTypeData(d.type);
-                const copiedInfo = d.copiedFromMonth
-                    ? `<br><small style="color:#888;">${t.copiedFrom}: ${getMonthTitle(d.copiedFromMonth)}</small>`
-                    : '';
+            if (!allRows.length) {
+                monthHtml += `<div class="month-empty">${t.empty}</div>`;
+            } else if (!rows.length) {
+                monthHtml += `<div class="month-empty">${t.nothingToCopy}</div>`;
+            } else {
+                rows.forEach(({ item: d, originalIndex }) => {
+                    const typeData = getTypeData(d.type);
+                    const copiedInfo = d.copiedFromMonth
+                        ? `<br><small style="color:#888;">${t.copiedFrom}: ${getMonthTitle(d.copiedFromMonth)}</small>`
+                        : '';
 
-                monthHtml += `
-                    <div class="transaction-item">
-                        <div>
-                            <small>${d.date}</small><br>
-                            <b>${d.ter}</b><br>
-                            <span class="type-pill ${typeData.pill}">${typeData.label.replace(/[()+\\-]/g, '').trim()}</span>
-                            ${copiedInfo}
-                        </div>
-
-                        <div style="text-align:right;">
-                            <div style="color:${typeData.color}; font-weight:bold;">
-                                ${formatMoney(d.amt)}
+                    monthHtml += `
+                        <div class="transaction-item">
+                            <div>
+                                <small>${d.date}</small><br>
+                                <b>${d.ter}</b><br>
+                                <span class="type-pill ${typeData.pill}">${typeData.label.replace(/[()+\-]/g, '').trim()}</span>
+                                ${copiedInfo}
                             </div>
-                            <small style="color:#666;">${d.desc || ''}</small><br>
-                            <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
-                            <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+
+                            <div style="text-align:right;">
+                                <div style="color:${typeData.color}; font-weight:bold;">
+                                    ${formatMoney(d.amt)}
+                                </div>
+                                <small style="color:#666;">${d.desc || ''}</small><br>
+                                <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
+                                <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
 
             monthHtml += `</div>`;
             list.innerHTML += monthHtml;
@@ -1391,7 +1445,7 @@
             </div>
 
             <div class="receipt-footer">
-                © 2026 Mi Finanzas Pro · ${t.digitalReceipt}
+                © 2026 FINANZAS JL · ${t.digitalReceipt}
             </div>
         `;
     }
@@ -1598,7 +1652,7 @@
                             padding:10px;
                             border-top:1px solid #ddd;
                             text-align:center;">
-                            © 2026 Mi Finanzas Pro · ${t.autoReport}
+                            © 2026 FINANZAS JL · ${t.autoReport}
                         </td>
                     </tr>
 
@@ -1647,7 +1701,7 @@
             <html lang="${currentLang}">
             <head>
                 <meta charset="UTF-8">
-                <title>Recibo Mi Finanzas Pro</title>
+                <title>Recibo FINANZAS JL</title>
 
                 <style>
                     ${styles}
