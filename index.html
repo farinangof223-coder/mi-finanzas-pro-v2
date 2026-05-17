@@ -222,6 +222,64 @@
             line-height: 1.45;
         }
 
+
+
+        .history-year-card {
+            background: white;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid #e2e6ea;
+        }
+
+        .history-year-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .month-button {
+            border: 1px solid #dce3e8;
+            background: #f8fafc;
+            color: #333;
+            border-radius: 12px;
+            padding: 12px 6px;
+            font-weight: bold;
+            cursor: pointer;
+            min-height: 62px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .month-button.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .month-button.empty-month {
+            opacity: 0.65;
+        }
+
+        .month-button small {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            font-weight: normal;
+        }
+
+        .selected-month-container {
+            margin-top: 12px;
+        }
+
         .month-section {
             margin-bottom: 18px;
             overflow: hidden;
@@ -773,7 +831,10 @@
             selectTargetMonth: "Selecciona el mes destino.",
             sameMonthError: "El mes origen y destino no pueden ser el mismo.",
             nothingToCopy: "No hay registros para copiar con el filtro seleccionado.",
-            copiedFrom: "Copiado desde"
+            copiedFrom: "Copiado desde",
+            selectMonthTitle: "Selecciona un mes",
+            yearLabel: "Año",
+            movementsCount: "movimientos"
         },
         en: {
             title: "FINANZAS JL",
@@ -839,7 +900,10 @@
             selectTargetMonth: "Select the target month.",
             sameMonthError: "Source and target month cannot be the same.",
             nothingToCopy: "No records to copy with the selected filter.",
-            copiedFrom: "Copied from"
+            copiedFrom: "Copied from",
+            selectMonthTitle: "Select a month",
+            yearLabel: "Year",
+            movementsCount: "transactions"
         }
     };
 
@@ -1133,6 +1197,48 @@
         return [...months].sort().reverse();
     }
 
+    let selectedHistoryYear = Number(localStorage.getItem('selected_history_year')) || new Date().getFullYear();
+    let selectedHistoryMonth = localStorage.getItem('selected_history_month') || getMonthKeyFromDate(new Date());
+
+    function getAvailableYears() {
+        const years = new Set([new Date().getFullYear(), selectedHistoryYear]);
+        db.forEach(item => {
+            const key = getMonthKeyFromEntry(item);
+            if (key && key.includes('-')) {
+                years.add(Number(key.split('-')[0]));
+            }
+        });
+        return [...years].filter(Boolean).sort((a, b) => b - a);
+    }
+
+    function getYearMonths(year) {
+        return Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`);
+    }
+
+    function getShortMonthTitle(monthKey) {
+        const [year, month] = monthKey.split('-').map(Number);
+        const date = new Date(year, month - 1, 1);
+        const locale = currentLang === 'es' ? 'es-CO' : 'en-US';
+        return date.toLocaleDateString(locale, { month: 'short' }).replace('.', '');
+    }
+
+    function setHistoryYear(value) {
+        selectedHistoryYear = Number(value) || new Date().getFullYear();
+        selectedHistoryMonth = `${selectedHistoryYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        localStorage.setItem('selected_history_year', selectedHistoryYear);
+        localStorage.setItem('selected_history_month', selectedHistoryMonth);
+        renderHist();
+    }
+
+    function selectHistoryMonth(monthKey) {
+        selectedHistoryMonth = monthKey;
+        selectedHistoryYear = Number(monthKey.split('-')[0]);
+        localStorage.setItem('selected_history_month', selectedHistoryMonth);
+        localStorage.setItem('selected_history_year', selectedHistoryYear);
+        renderHist();
+    }
+
+
     function renderFilterOptions(selectedValue) {
         const t = translations[currentLang];
         const options = [
@@ -1230,89 +1336,129 @@
             groups[monthKey].push({ item, originalIndex });
         });
 
-        const monthKeys = getAvailableMonthKeys();
+        const years = getAvailableYears();
 
-        if (!monthKeys.length) {
-            list.innerHTML = `<div class="card"><p style='text-align:center;'>${t.empty}</p></div>`;
-            return;
+        if (!years.includes(selectedHistoryYear)) {
+            selectedHistoryYear = years[0] || new Date().getFullYear();
         }
 
-        list.innerHTML = '';
+        if (!selectedHistoryMonth || !selectedHistoryMonth.startsWith(String(selectedHistoryYear))) {
+            selectedHistoryMonth = `${selectedHistoryYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        }
 
-        monthKeys.forEach(monthKey => {
-            const allRows = (groups[monthKey] || []).sort((a, b) => b.originalIndex - a.originalIndex);
-            const filterValue = getMonthFilter(monthKey);
-            const rows = allRows.filter(row => matchesHistoryFilter(row.item, filterValue));
-            const targetDefault = getMonthKeyFromDate(new Date());
+        const monthsOfYear = getYearMonths(selectedHistoryYear);
 
-            let monthHtml = `
-                <div class="month-section">
-                    <div class="month-header">
-                        <div class="month-title">${getMonthTitle(monthKey)}</div>
+        let html = `
+            <div class="history-year-card">
+                <div class="history-year-row">
+                    <div>
+                        <label style="font-size:0.82rem; font-weight:bold; color:var(--primary); text-transform:uppercase;">
+                            ${t.selectMonthTitle}
+                        </label>
                     </div>
-
-                    <div class="month-tools">
-                        <div class="month-filter-title">${t.histFilter}</div>
-                        <div class="form-group">
-                            <select onchange="setMonthFilter('${monthKey}', this.value)">
-                                ${renderFilterOptions(filterValue)}
-                            </select>
-                        </div>
-
-                        <details class="copy-panel">
-                            <summary>📋 ${t.copyPanel}</summary>
-                            <div class="copy-panel-body">
-                                <div class="month-tools-row">
-                                    <div class="form-group">
-                                        <label>${t.copyTo}</label>
-                                        <input type="month" id="copy-target-${monthKey}" value="${targetDefault}">
-                                    </div>
-
-                                    <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
-                                        ${t.copyMonth}
-                                    </button>
-                                </div>
-                            </div>
-                        </details>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>${t.yearLabel}</label>
+                        <select onchange="setHistoryYear(this.value)">
+                            ${years.map(year => `<option value="${year}" ${year === selectedHistoryYear ? 'selected' : ''}>${year}</option>`).join('')}
+                        </select>
                     </div>
+                </div>
+
+                <div class="months-grid">
+        `;
+
+        monthsOfYear.forEach(monthKey => {
+            const count = (groups[monthKey] || []).length;
+            const activeClass = monthKey === selectedHistoryMonth ? 'active' : '';
+            const emptyClass = count ? '' : 'empty-month';
+
+            html += `
+                <button class="month-button ${activeClass} ${emptyClass}" onclick="selectHistoryMonth('${monthKey}')">
+                    ${getShortMonthTitle(monthKey)}
+                    <small>${count} ${t.movementsCount}</small>
+                </button>
             `;
+        });
 
-            if (!allRows.length) {
-                monthHtml += `<div class="month-empty">${t.empty}</div>`;
-            } else if (!rows.length) {
-                monthHtml += `<div class="month-empty">${t.nothingToCopy}</div>`;
-            } else {
-                rows.forEach(({ item: d, originalIndex }) => {
-                    const typeData = getTypeData(d.type);
-                    const copiedInfo = d.copiedFromMonth
-                        ? `<br><small style="color:#888;">${t.copiedFrom}: ${getMonthTitle(d.copiedFromMonth)}</small>`
-                        : '';
+        html += `
+                </div>
+            </div>
+            <div class="selected-month-container">
+        `;
 
-                    monthHtml += `
-                        <div class="transaction-item">
-                            <div>
-                                <small>${d.date}</small><br>
-                                <b>${d.ter}</b><br>
-                                <span class="type-pill ${typeData.pill}">${typeData.label.replace(/[()+\-]/g, '').trim()}</span>
-                                ${copiedInfo}
-                            </div>
+        const monthKey = selectedHistoryMonth;
+        const allRows = (groups[monthKey] || []).sort((a, b) => b.originalIndex - a.originalIndex);
+        const filterValue = getMonthFilter(monthKey);
+        const rows = allRows.filter(row => matchesHistoryFilter(row.item, filterValue));
+        const targetDefault = getMonthKeyFromDate(new Date());
 
-                            <div style="text-align:right;">
-                                <div style="color:${typeData.color}; font-weight:bold;">
-                                    ${formatMoney(d.amt)}
+        html += `
+            <div class="month-section">
+                <div class="month-header">
+                    <div class="month-title">${getMonthTitle(monthKey)}</div>
+                </div>
+
+                <div class="month-tools">
+                    <div class="month-filter-title">${t.histFilter}</div>
+                    <div class="form-group">
+                        <select onchange="setMonthFilter('${monthKey}', this.value)">
+                            ${renderFilterOptions(filterValue)}
+                        </select>
+                    </div>
+
+                    <details class="copy-panel">
+                        <summary>📋 ${t.copyPanel}</summary>
+                        <div class="copy-panel-body">
+                            <div class="month-tools-row">
+                                <div class="form-group">
+                                    <label>${t.copyTo}</label>
+                                    <input type="month" id="copy-target-${monthKey}" value="${targetDefault}">
                                 </div>
-                                <small style="color:#666;">${d.desc || ''}</small><br>
-                                <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
-                                <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+
+                                <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
+                                    ${t.copyMonth}
+                                </button>
                             </div>
                         </div>
-                    `;
-                });
-            }
+                    </details>
+                </div>
+        `;
 
-            monthHtml += `</div>`;
-            list.innerHTML += monthHtml;
-        });
+        if (!allRows.length) {
+            html += `<div class="month-empty">${t.empty}</div>`;
+        } else if (!rows.length) {
+            html += `<div class="month-empty">${t.nothingToCopy}</div>`;
+        } else {
+            rows.forEach(({ item: d, originalIndex }) => {
+                const typeData = getTypeData(d.type);
+                const copiedInfo = d.copiedFromMonth
+                    ? `<br><small style="color:#888;">${t.copiedFrom}: ${getMonthTitle(d.copiedFromMonth)}</small>`
+                    : '';
+
+                html += `
+                    <div class="transaction-item">
+                        <div>
+                            <small>${d.date}</small><br>
+                            <b>${d.ter}</b><br>
+                            <span class="type-pill ${typeData.pill}">${typeData.label.replace(/[()+\-]/g, '').trim()}</span>
+                            ${copiedInfo}
+                        </div>
+
+                        <div style="text-align:right;">
+                            <div style="color:${typeData.color}; font-weight:bold;">
+                                ${formatMoney(d.amt)}
+                            </div>
+                            <small style="color:#666;">${d.desc || ''}</small><br>
+                            <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
+                            <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        html += `</div></div>`;
+        list.innerHTML = html;
     }
 
     function editItem(index) {
