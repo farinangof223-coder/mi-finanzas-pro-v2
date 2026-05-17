@@ -1336,51 +1336,25 @@
             groups[monthKey].push({ item, originalIndex });
         });
 
-        const years = getAvailableYears();
-
-        if (!years.includes(selectedHistoryYear)) {
-            selectedHistoryYear = years[0] || new Date().getFullYear();
+        if (!selectedHistoryMonth) {
+            selectedHistoryMonth = getMonthKeyFromDate(new Date());
         }
 
-        if (!selectedHistoryMonth || !selectedHistoryMonth.startsWith(String(selectedHistoryYear))) {
-            selectedHistoryMonth = `${selectedHistoryYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        }
+        selectedHistoryYear = Number(selectedHistoryMonth.split('-')[0]) || new Date().getFullYear();
+        localStorage.setItem('selected_history_year', selectedHistoryYear);
 
-        const monthsOfYear = getYearMonths(selectedHistoryYear);
+        const selectedMonthCount = (groups[selectedHistoryMonth] || []).length;
 
         let html = `
             <div class="history-year-card">
-                <div class="history-year-row">
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:bold; color:var(--primary); text-transform:uppercase;">
-                            ${t.selectMonthTitle}
-                        </label>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>${t.yearLabel}</label>
-                        <select onchange="setHistoryYear(this.value)">
-                            ${years.map(year => `<option value="${year}" ${year === selectedHistoryYear ? 'selected' : ''}>${year}</option>`).join('')}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="months-grid">
-        `;
-
-        monthsOfYear.forEach(monthKey => {
-            const count = (groups[monthKey] || []).length;
-            const activeClass = monthKey === selectedHistoryMonth ? 'active' : '';
-            const emptyClass = count ? '' : 'empty-month';
-
-            html += `
-                <button class="month-button ${activeClass} ${emptyClass}" onclick="selectHistoryMonth('${monthKey}')">
-                    ${getShortMonthTitle(monthKey)}
-                    <small>${count} ${t.movementsCount}</small>
-                </button>
-            `;
-        });
-
-        html += `
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:0.82rem; font-weight:bold; color:var(--primary); text-transform:uppercase;">
+                        ${t.selectMonthTitle}
+                    </label>
+                    <input type="month" value="${selectedHistoryMonth}" onchange="selectHistoryMonth(this.value)">
+                    <small style="display:block; margin-top:7px; color:#666; font-size:0.78rem;">
+                        ${selectedMonthCount} ${t.movementsCount}
+                    </small>
                 </div>
             </div>
             <div class="selected-month-container">
