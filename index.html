@@ -208,6 +208,87 @@
             border: 1px solid #fff59d;
         }
 
+
+
+        /* =========================
+           HISTORIAL POR MESES
+        ========================= */
+
+        .hist-tools {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .hist-tools-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .hist-help {
+            font-size: 0.78rem;
+            color: #666;
+            line-height: 1.4;
+            background: #f7f9fb;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .month-section {
+            margin-bottom: 16px;
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid #e5e5e5;
+            background: white;
+        }
+
+        .month-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .month-total {
+            font-size: 0.85rem;
+            opacity: 0.95;
+            text-align: right;
+        }
+
+        .type-pill {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .type-pill.income {
+            background: var(--accent);
+        }
+
+        .type-pill.expense {
+            background: var(--danger);
+        }
+
+        .type-pill.debt {
+            background: var(--warning);
+            color: #333;
+        }
+
+        @media (max-width: 420px) {
+            .hist-tools-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* =========================
            RECIBO PROFESIONAL
         ========================= */
@@ -527,6 +608,39 @@
 
 <!-- VISTA HISTORIAL -->
 <div id="scr-hist" class="screen">
+    <div class="card hist-tools">
+        <div class="form-group">
+            <label id="lbl-hist-filter">Filtrar historial</label>
+            <select id="hist-type-filter" onchange="renderHist()">
+                <option value="all" id="hist-filter-all">Todos los movimientos</option>
+                <option value="in" id="hist-filter-in">Ingresos</option>
+                <option value="out" id="hist-filter-out">Gastos</option>
+                <option value="deu_up" id="hist-filter-deu-up">Deuda aumentar</option>
+                <option value="deu_down" id="hist-filter-deu-down">Deuda disminuir</option>
+            </select>
+        </div>
+
+        <div class="hist-help" id="hist-copy-help">
+            Para gastos que se repiten, selecciona un mes origen, el mes destino y copia los registros sin volverlos a digitar.
+        </div>
+
+        <div class="hist-tools-row">
+            <div class="form-group">
+                <label id="lbl-copy-from">Copiar desde</label>
+                <select id="copy-source-month"></select>
+            </div>
+
+            <div class="form-group">
+                <label id="lbl-copy-to">Pegar en mes</label>
+                <input type="month" id="copy-target-month">
+            </div>
+        </div>
+
+        <button id="btn-copy-month" onclick="copyMonthRecords()" class="btn btn-primary">
+            📋 Copiar mes filtrado
+        </button>
+    </div>
+
     <div class="card" id="hist-list"></div>
 </div>
 
@@ -624,7 +738,19 @@
             workingCurrency: "Moneda de trabajo",
             movementDetail: "DETALLE DE MOVIMIENTOS",
             currency: "MONEDA",
-            autoReport: "Reporte generado automáticamente"
+            autoReport: "Reporte generado automáticamente",
+            histFilter: "Filtrar historial",
+            allMovements: "Todos los movimientos",
+            copyHelp: "Para gastos que se repiten, selecciona un mes origen, el mes destino y copia los registros sin volverlos a digitar.",
+            copyFrom: "Copiar desde",
+            copyTo: "Pegar en mes",
+            copyMonth: "📋 Copiar mes filtrado",
+            noMonth: "No hay meses disponibles",
+            copiedOk: "Registros copiados correctamente",
+            selectTargetMonth: "Selecciona el mes destino.",
+            sameMonthError: "El mes origen y destino no pueden ser el mismo.",
+            nothingToCopy: "No hay registros para copiar con el filtro seleccionado.",
+            copiedFrom: "Copiado desde"
         },
         en: {
             title: "MY FINANCES PRO",
@@ -677,7 +803,19 @@
             workingCurrency: "Working currency",
             movementDetail: "TRANSACTION DETAILS",
             currency: "CURRENCY",
-            autoReport: "Automatically generated report"
+            autoReport: "Automatically generated report",
+            histFilter: "Filter history",
+            allMovements: "All transactions",
+            copyHelp: "For repeated expenses, select a source month, a target month and copy records without typing them again.",
+            copyFrom: "Copy from",
+            copyTo: "Paste into month",
+            copyMonth: "📋 Copy filtered month",
+            noMonth: "No available months",
+            copiedOk: "Records copied successfully",
+            selectTargetMonth: "Select the target month.",
+            sameMonthError: "Source and target month cannot be the same.",
+            nothingToCopy: "No records to copy with the selected filter.",
+            copiedFrom: "Copied from"
         }
     };
 
@@ -729,6 +867,19 @@
         document.getElementById('txt-btn-print').innerText = t.share;
         document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
+
+        if (document.getElementById('lbl-hist-filter')) {
+            document.getElementById('lbl-hist-filter').innerText = t.histFilter;
+            document.getElementById('hist-filter-all').innerText = t.allMovements;
+            document.getElementById('hist-filter-in').innerText = t.in;
+            document.getElementById('hist-filter-out').innerText = t.out;
+            document.getElementById('hist-filter-deu-up').innerText = t.optDeuUp;
+            document.getElementById('hist-filter-deu-down').innerText = t.optDeuDown;
+            document.getElementById('hist-copy-help').innerText = t.copyHelp;
+            document.getElementById('lbl-copy-from').innerText = t.copyFrom;
+            document.getElementById('lbl-copy-to').innerText = t.copyTo;
+            document.getElementById('btn-copy-month').innerText = t.copyMonth;
+        }
 
         document.getElementById('btn-save').innerText =
             document.getElementById('edit-index').value === "-1" ? t.save : t.update;
@@ -796,7 +947,8 @@
             type: document.getElementById('type').value,
             afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
-            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date
+            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date,
+            monthKey: idx === "-1" ? getMonthKeyFromDate(new Date()) : (db[idx].monthKey || getMonthKeyFromEntry(db[idx]))
         };
 
         if (!entry.ter || isNaN(entry.amt)) {
@@ -860,47 +1012,254 @@
         document.getElementById('res-net').innerText = formatMoney(i - g);
     }
 
+    function getMonthKeyFromDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    }
+
+    function parseEntryDate(entry) {
+        if (!entry || !entry.date) {
+            return new Date();
+        }
+
+        const raw = String(entry.date).trim();
+
+        const iso = raw.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (iso) {
+            return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+        }
+
+        const normal = raw.match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+        if (normal) {
+            const day = Number(normal[1]);
+            const month = Number(normal[2]);
+            const year = Number(normal[3]);
+            return new Date(year, month - 1, day);
+        }
+
+        const parsed = new Date(raw);
+        return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+
+    function getMonthKeyFromEntry(entry) {
+        if (entry.monthKey) {
+            return entry.monthKey;
+        }
+
+        return getMonthKeyFromDate(parseEntryDate(entry));
+    }
+
+    function getMonthTitle(monthKey) {
+        if (!monthKey || !monthKey.includes('-')) {
+            return currentLang === 'es' ? 'Sin fecha' : 'No date';
+        }
+
+        const [year, month] = monthKey.split('-').map(Number);
+        const date = new Date(year, month - 1, 1);
+        const locale = currentLang === 'es' ? 'es-CO' : 'en-US';
+        return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    }
+
+    function getTypeData(type) {
+        const t = translations[currentLang];
+
+        if (type === 'in') {
+            return { label: t.optIn, color: 'var(--accent)', pill: 'income' };
+        }
+
+        if (type === 'out') {
+            return { label: t.optOut, color: 'var(--danger)', pill: 'expense' };
+        }
+
+        if (type === 'deu_up') {
+            return { label: t.optDeuUp, color: 'var(--warning)', pill: 'debt' };
+        }
+
+        if (type === 'deu_down') {
+            return { label: t.optDeuDown, color: 'var(--warning)', pill: 'debt' };
+        }
+
+        return { label: type, color: 'var(--primary)', pill: 'income' };
+    }
+
+    function getCurrentHistoryFilter() {
+        const filter = document.getElementById('hist-type-filter');
+        return filter ? filter.value : 'all';
+    }
+
+    function matchesHistoryFilter(item) {
+        const filter = getCurrentHistoryFilter();
+        return filter === 'all' || item.type === filter;
+    }
+
+    function populateMonthSelectors() {
+        const sourceSelect = document.getElementById('copy-source-month');
+        const targetInput = document.getElementById('copy-target-month');
+
+        if (!sourceSelect || !targetInput) {
+            return;
+        }
+
+        const selected = sourceSelect.value;
+        const months = [...new Set(db.map(item => getMonthKeyFromEntry(item)))]
+            .sort()
+            .reverse();
+
+        sourceSelect.innerHTML = '';
+
+        if (!months.length) {
+            sourceSelect.innerHTML = `<option value="">${translations[currentLang].noMonth}</option>`;
+        } else {
+            months.forEach(monthKey => {
+                const option = document.createElement('option');
+                option.value = monthKey;
+                option.textContent = getMonthTitle(monthKey);
+                sourceSelect.appendChild(option);
+            });
+
+            if (months.includes(selected)) {
+                sourceSelect.value = selected;
+            }
+        }
+
+        if (!targetInput.value) {
+            targetInput.value = getMonthKeyFromDate(new Date());
+        }
+    }
+
+    function buildDateForCopiedEntry(originalEntry, targetMonthKey) {
+        const originalDate = parseEntryDate(originalEntry);
+        const [year, month] = targetMonthKey.split('-').map(Number);
+        const maxDay = new Date(year, month, 0).getDate();
+        const day = Math.min(originalDate.getDate(), maxDay);
+        const copiedDate = new Date(
+            year,
+            month - 1,
+            day,
+            originalDate.getHours(),
+            originalDate.getMinutes(),
+            originalDate.getSeconds()
+        );
+
+        return copiedDate.toLocaleString();
+    }
+
+    function copyMonthRecords() {
+        const sourceMonth = document.getElementById('copy-source-month').value;
+        const targetMonth = document.getElementById('copy-target-month').value;
+        const t = translations[currentLang];
+
+        if (!sourceMonth) {
+            alert(t.noMonth);
+            return;
+        }
+
+        if (!targetMonth) {
+            alert(t.selectTargetMonth);
+            return;
+        }
+
+        if (sourceMonth === targetMonth) {
+            alert(t.sameMonthError);
+            return;
+        }
+
+        const recordsToCopy = db.filter(item =>
+            getMonthKeyFromEntry(item) === sourceMonth && matchesHistoryFilter(item)
+        );
+
+        if (!recordsToCopy.length) {
+            alert(t.nothingToCopy);
+            return;
+        }
+
+        const copied = recordsToCopy.map(item => ({
+            ...item,
+            date: buildDateForCopiedEntry(item, targetMonth),
+            monthKey: targetMonth,
+            copiedFromMonth: sourceMonth
+        }));
+
+        db = db.concat(copied);
+        localStorage.setItem('freddy_db_v11', JSON.stringify(db));
+
+        updateUI();
+        renderHist();
+        alert(`${t.copiedOk}: ${copied.length}`);
+    }
+
     function renderHist() {
         const list = document.getElementById('hist-list');
+        const t = translations[currentLang];
 
-        list.innerHTML = db.length
-            ? ""
-            : `<p style='text-align:center;'>${translations[currentLang].empty}</p>`;
+        populateMonthSelectors();
 
-        db.slice().reverse().forEach((d, index) => {
-            const actualIndex = db.length - 1 - index;
+        const filtered = db
+            .map((item, originalIndex) => ({ item, originalIndex }))
+            .filter(row => matchesHistoryFilter(row.item));
 
-            let color = 'var(--primary)';
+        if (!filtered.length) {
+            list.innerHTML = `<p style='text-align:center;'>${t.empty}</p>`;
+            return;
+        }
 
-            if (d.type === 'in') {
-                color = 'var(--accent)';
+        const groups = {};
+
+        filtered.forEach(row => {
+            const monthKey = getMonthKeyFromEntry(row.item);
+
+            if (!groups[monthKey]) {
+                groups[monthKey] = [];
             }
 
-            if (d.type === 'out') {
-                color = 'var(--danger)';
-            }
+            groups[monthKey].push(row);
+        });
 
-            if (d.type.startsWith('deu')) {
-                color = 'var(--warning)';
-            }
+        const sortedMonths = Object.keys(groups).sort().reverse();
+        list.innerHTML = '';
 
-            list.innerHTML += `
-                <div class="transaction-item">
-                    <div>
-                        <small>${d.date}</small><br>
-                        <b>${d.ter}</b>
+        sortedMonths.forEach(monthKey => {
+            const rows = groups[monthKey].sort((a, b) => b.originalIndex - a.originalIndex);
+            const monthTotal = rows.reduce((sum, row) => sum + Number(row.item.amt || 0), 0);
+
+            let monthHtml = `
+                <div class="month-section">
+                    <div class="month-header">
+                        <span>${getMonthTitle(monthKey)}</span>
+                        <span class="month-total">${rows.length} mov. · ${formatMoney(monthTotal)}</span>
                     </div>
+            `;
 
-                    <div style="text-align:right;">
-                        <div style="color:${color}; font-weight:bold;">
-                            ${formatMoney(d.amt)}
+            rows.forEach(({ item: d, originalIndex }) => {
+                const typeData = getTypeData(d.type);
+                const copiedInfo = d.copiedFromMonth
+                    ? `<br><small style="color:#888;">${t.copiedFrom}: ${getMonthTitle(d.copiedFromMonth)}</small>`
+                    : '';
+
+                monthHtml += `
+                    <div class="transaction-item">
+                        <div>
+                            <small>${d.date}</small><br>
+                            <b>${d.ter}</b><br>
+                            <span class="type-pill ${typeData.pill}">${typeData.label.replace(/[()+\\-]/g, '').trim()}</span>
+                            ${copiedInfo}
                         </div>
 
-                        <button class="btn-edit" onclick="editItem(${actualIndex})">✏️</button>
-                        <button class="btn-delete" onclick="deleteItem(${actualIndex})">🗑️</button>
+                        <div style="text-align:right;">
+                            <div style="color:${typeData.color}; font-weight:bold;">
+                                ${formatMoney(d.amt)}
+                            </div>
+                            <small style="color:#666;">${d.desc || ''}</small><br>
+                            <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
+                            <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            });
+
+            monthHtml += `</div>`;
+            list.innerHTML += monthHtml;
         });
     }
 
