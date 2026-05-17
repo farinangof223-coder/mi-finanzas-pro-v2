@@ -254,33 +254,45 @@
             line-height: 1.35;
         }
 
-        .month-summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px;
-            background: #f7f9fb;
-            border-bottom: 1px solid #edf0f2;
-        }
-
-        .month-summary-item {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 9px;
-            font-size: 0.75rem;
-            border: 1px solid #edf0f2;
-        }
-
-        .month-summary-item b {
-            display: block;
-            margin-top: 3px;
-            font-size: 0.86rem;
-        }
-
         .month-tools {
             padding: 12px;
             background: #ffffff;
             border-bottom: 1px solid #edf0f2;
+        }
+
+        .month-filter-title {
+            font-size: 0.82rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .copy-panel {
+            margin-top: 10px;
+            border: 1px solid #e1e7ec;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f9fbfd;
+        }
+
+        .copy-panel summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 12px;
+            background: #eef5fb;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .copy-panel summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .copy-panel-body {
+            padding: 12px;
+            border-top: 1px solid #e1e7ec;
         }
 
         .month-tools-row {
@@ -327,8 +339,7 @@
         }
 
         @media (max-width: 420px) {
-            .month-tools-row,
-            .month-summary-grid {
+            .month-tools-row {
                 grid-template-columns: 1fr;
             }
         }
@@ -652,10 +663,6 @@
 
 <!-- VISTA HISTORIAL -->
 <div id="scr-hist" class="screen">
-    <div class="card hist-intro" id="hist-copy-help">
-        Cada mes aparece en un bloque separado. Dentro de cada mes puedes filtrar por tipo de movimiento y copiar los registros repetidos hacia otro mes.
-    </div>
-
     <div id="hist-list"></div>
 </div>
 
@@ -754,12 +761,13 @@
             movementDetail: "DETALLE DE MOVIMIENTOS",
             currency: "MONEDA",
             autoReport: "Reporte generado automáticamente",
-            histFilter: "Filtrar historial",
+            histFilter: "Filtrar mes",
             allMovements: "Todos los movimientos",
             copyHelp: "Cada mes aparece en un bloque separado. Dentro de cada mes puedes filtrar por tipo de movimiento y copiar los registros repetidos hacia otro mes.",
             copyFrom: "Copiar desde",
             copyTo: "Pegar en mes",
             copyMonth: "📋 Copiar mes filtrado",
+            copyPanel: "Copiar / pegar movimientos",
             noMonth: "No hay meses disponibles",
             copiedOk: "Registros copiados correctamente",
             selectTargetMonth: "Selecciona el mes destino.",
@@ -819,12 +827,13 @@
             movementDetail: "TRANSACTION DETAILS",
             currency: "CURRENCY",
             autoReport: "Automatically generated report",
-            histFilter: "Filter history",
+            histFilter: "Filter month",
             allMovements: "All transactions",
             copyHelp: "Each month appears in its own block. Inside each month you can filter by movement type and copy repeated records to another month.",
             copyFrom: "Copy from",
             copyTo: "Paste into month",
             copyMonth: "📋 Copy filtered month",
+            copyPanel: "Copy / paste transactions",
             noMonth: "No available months",
             copiedOk: "Records copied successfully",
             selectTargetMonth: "Select the target month.",
@@ -883,9 +892,6 @@
         document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
 
-        if (document.getElementById('hist-copy-help')) {
-            document.getElementById('hist-copy-help').innerText = t.copyHelp;
-        }
 
         document.getElementById('btn-save').innerText =
             document.getElementById('edit-index').value === "-1" ? t.save : t.update;
@@ -1237,45 +1243,37 @@
             const allRows = (groups[monthKey] || []).sort((a, b) => b.originalIndex - a.originalIndex);
             const filterValue = getMonthFilter(monthKey);
             const rows = allRows.filter(row => matchesHistoryFilter(row.item, filterValue));
-            const totals = getMonthTotals(allRows);
-            const visibleTotal = rows.reduce((sum, row) => sum + Number(row.item.amt || 0), 0);
             const targetDefault = getMonthKeyFromDate(new Date());
 
             let monthHtml = `
                 <div class="month-section">
                     <div class="month-header">
                         <div class="month-title">${getMonthTitle(monthKey)}</div>
-                        <div class="month-total">
-                            ${allRows.length} mov. registrados<br>
-                            Vista actual: ${formatMoney(visibleTotal)}
-                        </div>
-                    </div>
-
-                    <div class="month-summary-grid">
-                        <div class="month-summary-item" style="border-left:4px solid var(--accent);">${t.in}<b>${formatMoney(totals.in)}</b></div>
-                        <div class="month-summary-item" style="border-left:4px solid var(--danger);">${t.out}<b>${formatMoney(totals.out)}</b></div>
-                        <div class="month-summary-item" style="border-left:4px solid var(--warning);">${t.optDeuUp.replace(/[()+\-]/g, '').trim()}<b>${formatMoney(totals.deu_up)}</b></div>
-                        <div class="month-summary-item" style="border-left:4px solid var(--warning);">${t.optDeuDown.replace(/[()+\-]/g, '').trim()}<b>${formatMoney(totals.deu_down)}</b></div>
                     </div>
 
                     <div class="month-tools">
+                        <div class="month-filter-title">${t.histFilter}</div>
                         <div class="form-group">
-                            <label>${t.histFilter}</label>
                             <select onchange="setMonthFilter('${monthKey}', this.value)">
                                 ${renderFilterOptions(filterValue)}
                             </select>
                         </div>
 
-                        <div class="month-tools-row">
-                            <div class="form-group">
-                                <label>${t.copyTo}</label>
-                                <input type="month" id="copy-target-${monthKey}" value="${targetDefault}">
-                            </div>
+                        <details class="copy-panel">
+                            <summary>📋 ${t.copyPanel}</summary>
+                            <div class="copy-panel-body">
+                                <div class="month-tools-row">
+                                    <div class="form-group">
+                                        <label>${t.copyTo}</label>
+                                        <input type="month" id="copy-target-${monthKey}" value="${targetDefault}">
+                                    </div>
 
-                            <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
-                                ${t.copyMonth}
-                            </button>
-                        </div>
+                                    <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
+                                        ${t.copyMonth}
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
                     </div>
             `;
 
