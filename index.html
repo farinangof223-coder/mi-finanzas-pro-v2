@@ -1182,6 +1182,22 @@
         })}`;
     }
 
+
+    function formatLocalDateTime(dateValue) {
+        const date = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : new Date();
+        const locale = currentLang === 'es' ? 'es-CO' : 'en-US';
+
+        return date.toLocaleString(locale, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    }
+
     function getCurrentInputMonth() {
         const today = new Date();
         const year = today.getFullYear();
@@ -1351,7 +1367,7 @@
             type: document.getElementById('type').value,
             afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
-            date: idx === "-1" ? new Date().toLocaleString() : db[idx].date,
+            date: idx === "-1" ? formatLocalDateTime(new Date()) : db[idx].date,
             monthKey: idx === "-1" ? getMonthKeyFromDate(new Date()) : (db[idx].monthKey || getMonthKeyFromEntry(db[idx])),
             receiptNumber: idx === "-1"
                 ? generateReceiptNumber(new Date())
@@ -1720,7 +1736,7 @@
             originalDate.getSeconds()
         );
 
-        return copiedDate.toLocaleString();
+        return formatLocalDateTime(copiedDate);
     }
 
     function copyMonthRecords(sourceMonth) {
@@ -2016,7 +2032,6 @@
                 <div class="receipt-header">
                     <div>
                         <div class="receipt-brand">${t.title}</div>
-                        <div class="receipt-subtitle">${t.generated}</div>
                     </div>
 
                     <div style="text-align:right;">
@@ -2066,10 +2081,6 @@
             </div>
 
             <div style="margin-top:35px; padding-top:20px; border-top:1px solid #eee;">
-                <p class="receipt-note">
-                    ${t.internalSupport}
-                </p>
-
                 <div class="receipt-signatures">
                     <div class="receipt-signature">
                         ${t.signatureReceived}
@@ -2355,7 +2366,6 @@
                             ${issuerContact}
                             ${issuerEmail}
                             ${issuerAddress}
-                            <div>${t.generated}</div>
                         </div>
                     </div>
 
@@ -2406,10 +2416,6 @@
             </div>
 
             <div style="margin-top:35px; padding-top:20px; border-top:1px solid #eee;">
-                <p class="receipt-note">
-                    ${t.internalSupport}
-                </p>
-
                 <div class="receipt-signatures">
                     <div class="receipt-signature">
                         ${t.signatureReceived}
