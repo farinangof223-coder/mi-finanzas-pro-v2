@@ -832,14 +832,44 @@
     <div id="hist-list"></div>
 </div>
 
-<!-- VISTA RECIBO -->
-<div id="scr-rec" class="screen">
-    <div id="receipt-selector-card"></div>
-    <div class="receipt-box" id="rec-box"></div>
+<!-- VISTA PERFIL / EMISOR -->
+<div id="scr-profile" class="screen">
+    <div class="card">
+        <h3 id="txt-profile-title" style="color:var(--primary); margin-bottom:12px;">👤 Datos del emisor</h3>
 
-    <button id="txt-btn-print" onclick="descargarReciboPDF()" class="btn" style="background:var(--accent)">
-        📄 Descargar recibo en PDF
-    </button>
+        <p id="txt-profile-help" style="font-size:0.85rem; color:#666; line-height:1.4; margin-bottom:15px;">
+            Estos datos aparecerán como emisor en los recibos generados por la app.
+        </p>
+
+        <div class="form-group">
+            <label id="lbl-profile-name">Nombre / Razón social</label>
+            <input type="text" id="profile-name" placeholder="Ej: Juan Riascos">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-profile-id">NIT / CC</label>
+            <input type="text" id="profile-id" placeholder="Ej: 123456789">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-profile-contact">Contacto</label>
+            <input type="text" id="profile-contact" placeholder="Ej: 300 000 0000">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-profile-email">Correo electrónico</label>
+            <input type="email" id="profile-email" placeholder="Ej: correo@ejemplo.com">
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-profile-address">Dirección</label>
+            <input type="text" id="profile-address" placeholder="Ej: Pasto, Nariño">
+        </div>
+
+        <button id="btn-profile-save" onclick="saveProfile()" class="btn btn-primary">
+            💾 Guardar datos del emisor
+        </button>
+    </div>
 </div>
 
 
@@ -884,8 +914,8 @@
         📜<br><span id="txt-nav-hist">Historial</span>
     </button>
 
-    <button class="nav-item" onclick="nav('scr-rec', this)">
-        📑<br><span id="txt-nav-rec">Recibo</span>
+    <button class="nav-item" onclick="nav('scr-profile', this)">
+        👤<br><span id="txt-nav-profile">Perfil</span>
     </button>
 </nav>
 
@@ -896,6 +926,39 @@
     let currentLang = localStorage.getItem('app_lang') || 'es';
     let currentCurrency = localStorage.getItem('app_currency') || 'COP';
     let selectedReceiptIndex = Number(localStorage.getItem('selected_receipt_index'));
+
+    let profile = JSON.parse(localStorage.getItem('finanzas_jl_profile_v1')) || {
+        name: "",
+        id: "",
+        contact: "",
+        email: "",
+        address: ""
+    };
+
+    function loadProfileForm() {
+        if (!document.getElementById('profile-name')) {
+            return;
+        }
+
+        document.getElementById('profile-name').value = profile.name || "";
+        document.getElementById('profile-id').value = profile.id || "";
+        document.getElementById('profile-contact').value = profile.contact || "";
+        document.getElementById('profile-email').value = profile.email || "";
+        document.getElementById('profile-address').value = profile.address || "";
+    }
+
+    function saveProfile() {
+        profile = {
+            name: document.getElementById('profile-name').value.trim(),
+            id: document.getElementById('profile-id').value.trim(),
+            contact: document.getElementById('profile-contact').value.trim(),
+            email: document.getElementById('profile-email').value.trim(),
+            address: document.getElementById('profile-address').value.trim()
+        };
+
+        localStorage.setItem('finanzas_jl_profile_v1', JSON.stringify(profile));
+        alert(translations[currentLang].profileSaved);
+    }
 
     const currencyConfigs = {
         COP: { locale: 'es-CO', symbol: '$', name: 'COP' },
@@ -969,6 +1032,16 @@
             add: "Nuevo",
             hist: "Historial",
             rec: "Recibo",
+            profile: "Perfil",
+            profileTitle: "👤 Datos del emisor",
+            profileHelp: "Estos datos aparecerán como emisor en los recibos generados por la app.",
+            profileName: "Nombre / Razón social",
+            profileId: "NIT / CC",
+            profileContact: "Contacto",
+            profileEmail: "Correo electrónico",
+            profileAddress: "Dirección",
+            profileSave: "💾 Guardar datos del emisor",
+            profileSaved: "Datos del emisor guardados correctamente",
             share: "📄 Descargar recibo en PDF",
             receiptChoose: "Selecciona movimiento para recibo",
             receiptView: "📄 Recibo",
@@ -982,7 +1055,7 @@
             taxId: "NIT / CÉDULA",
             lblCur: "Moneda de Trabajo:",
             generated: "Comprobante generado automáticamente",
-            internalSupport: "Este comprobante fue generado por FINANZAS JL como soporte interno del movimiento registrado.",
+            internalSupport: "Este comprobante fue generado como soporte interno del movimiento registrado.",
             signatureReceived: "Firma / Recibido",
             signatureResponsible: "Responsable",
             digitalReceipt: "Comprobante digital",
@@ -1042,6 +1115,16 @@
             add: "Add",
             hist: "History",
             rec: "Receipt",
+            profile: "Profile",
+            profileTitle: "👤 Issuer information",
+            profileHelp: "This information will appear as the issuer on receipts generated by the app.",
+            profileName: "Name / Business name",
+            profileId: "Tax ID / ID",
+            profileContact: "Contact",
+            profileEmail: "Email",
+            profileAddress: "Address",
+            profileSave: "💾 Save issuer information",
+            profileSaved: "Issuer information saved successfully",
             share: "📄 Download PDF Receipt",
             receiptChoose: "Select transaction for receipt",
             receiptView: "📄 Receipt",
@@ -1055,7 +1138,7 @@
             taxId: "TAX ID / ID",
             lblCur: "Working Currency:",
             generated: "Automatically generated receipt",
-            internalSupport: "This receipt was generated by FINANZAS JL as internal support for the registered transaction.",
+            internalSupport: "This receipt was generated as internal support for the registered transaction.",
             signatureReceived: "Signature / Received",
             signatureResponsible: "Responsible",
             digitalReceipt: "Digital receipt",
@@ -1155,8 +1238,8 @@
         updateUI();
         renderHist();
 
-        if (document.getElementById('scr-rec').classList.contains('active')) {
-            renderReceiptScreen();
+        if (document.getElementById('scr-hist').classList.contains('active')) {
+            renderHist();
         }
     }
 
@@ -1186,10 +1269,20 @@
         document.getElementById('txt-nav-home').innerText = t.home;
         document.getElementById('txt-nav-add').innerText = t.add;
         document.getElementById('txt-nav-hist').innerText = t.hist;
-        document.getElementById('txt-nav-rec').innerText = t.rec;
-        document.getElementById('txt-btn-print').innerText = t.share;
+        document.getElementById('txt-nav-profile').innerText = t.profile;
         document.getElementById('lbl-currency').innerText = t.lblCur;
         document.getElementById('lang-label').innerText = currentLang.toUpperCase();
+
+        if (document.getElementById('txt-profile-title')) {
+            document.getElementById('txt-profile-title').innerText = t.profileTitle;
+            document.getElementById('txt-profile-help').innerText = t.profileHelp;
+            document.getElementById('lbl-profile-name').innerText = t.profileName;
+            document.getElementById('lbl-profile-id').innerText = t.profileId;
+            document.getElementById('lbl-profile-contact').innerText = t.profileContact;
+            document.getElementById('lbl-profile-email').innerText = t.profileEmail;
+            document.getElementById('lbl-profile-address').innerText = t.profileAddress;
+            document.getElementById('btn-profile-save').innerText = t.profileSave;
+        }
 
 
         document.getElementById('btn-save').innerText =
@@ -1201,8 +1294,8 @@
         localStorage.setItem('app_lang', currentLang);
         applyLang();
 
-        if (document.getElementById('scr-rec').classList.contains('active')) {
-            renderReceiptScreen();
+        if (document.getElementById('scr-hist').classList.contains('active')) {
+            renderHist();
         }
     }
 
@@ -1240,8 +1333,8 @@
             renderHist();
         }
 
-        if (id === 'scr-rec') {
-            renderReceiptScreen();
+        if (id === 'scr-profile') {
+            loadProfileForm();
         }
 
         updateUI();
@@ -1716,9 +1809,11 @@
                     <label style="font-size:0.82rem; font-weight:bold; color:var(--primary); text-transform:uppercase;">
                         ${t.selectMonthTitle}
                     </label>
-                    <button type="button" class="month-picker-field" onclick="openMonthPicker('history', selectedHistoryMonth)">
-                        ${getMonthTitle(selectedHistoryMonth)}
-                    </button>
+                    <input
+                        type="month"
+                        value="${selectedHistoryMonth}"
+                        onchange="selectHistoryMonth(this.value)"
+                    >
                     <small style="display:block; margin-top:7px; color:#666; font-size:0.78rem;">
                         ${selectedMonthCount} ${t.movementsCount}
                     </small>
@@ -1753,10 +1848,11 @@
                             <div class="month-tools-row">
                                 <div class="form-group">
                                     <label>${t.copyTo}</label>
-                                    <input type="hidden" id="copy-target-${monthKey}" value="${targetDefault}">
-                                    <button type="button" id="copy-target-${monthKey}-label" class="month-picker-field" onclick="openMonthPicker('copy-target-${monthKey}', document.getElementById('copy-target-${monthKey}').value)">
-                                        ${getMonthTitle(targetDefault)}
-                                    </button>
+                                    <input
+                                        type="month"
+                                        id="copy-target-${monthKey}"
+                                        value="${targetDefault}"
+                                    >
                                 </div>
 
                                 <button onclick="copyMonthRecords('${monthKey}')" class="btn btn-primary month-copy-btn">
@@ -1795,7 +1891,7 @@
                             <small style="color:#666;">${d.desc || ''}</small><br>
                             <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
                             <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
-                            <button class="btn-edit" onclick="viewReceipt(${originalIndex})" title="${t.receiptView}">📄</button>
+                            <button class="btn-edit" onclick="descargarReciboPDF(${originalIndex})" title="${t.receiptView}">📄</button>
                         </div>
                     </div>
                 `;
@@ -1836,9 +1932,6 @@
             renderHist();
             updateUI();
 
-            if (document.getElementById('scr-rec').classList.contains('active')) {
-                renderReceiptScreen();
-            }
         }
     }
 
@@ -1886,10 +1979,7 @@
     }
 
     function viewReceipt(index) {
-        selectedReceiptIndex = Number(index);
-        ensureSelectedReceiptIndex();
-        const receiptNav = document.querySelectorAll('.bottom-nav .nav-item')[3];
-        nav('scr-rec', receiptNav);
+        descargarReciboPDF(index);
     }
 
     function renderReceiptScreen() {
@@ -2228,16 +2318,114 @@
         URL.revokeObjectURL(url);
     }
 
-    function descargarReciboPDF() {
+    function descargarReciboPDF(index) {
         if (!db.length) {
             alert(translations[currentLang].noReceipt);
             return;
         }
 
-        ensureSelectedReceiptIndex();
-        renderReceiptByIndex(selectedReceiptIndex);
+        const receiptIndex = typeof index === 'number' ? index : selectedReceiptIndex;
 
-        const receiptContent = document.getElementById('rec-box').innerHTML;
+        if (receiptIndex < 0 || receiptIndex >= db.length) {
+            alert(translations[currentLang].noReceipt);
+            return;
+        }
+
+        selectedReceiptIndex = receiptIndex;
+        localStorage.setItem('selected_receipt_index', selectedReceiptIndex);
+
+        const item = db[receiptIndex];
+        const t = translations[currentLang];
+        const typeData = getReceiptTypeData(item.type);
+        const receiptNumber = item.receiptNumber || ("REC-" + String(receiptIndex + 1).padStart(5, "0"));
+
+        const issuerName = profile.name || t.title;
+        const issuerId = profile.id ? `<div>CC/NIT: ${profile.id}</div>` : "";
+        const issuerContact = profile.contact ? `<div>${currentLang === 'es' ? 'Contacto' : 'Contact'}: ${profile.contact}</div>` : "";
+        const issuerEmail = profile.email ? `<div>${currentLang === 'es' ? 'Correo' : 'Email'}: ${profile.email}</div>` : "";
+        const issuerAddress = profile.address ? `<div>${currentLang === 'es' ? 'Dirección' : 'Address'}: ${profile.address}</div>` : "";
+
+        const receiptContent = `
+            <div style="border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 22px;">
+                <div class="receipt-header">
+                    <div>
+                        <div class="receipt-brand">${issuerName}</div>
+                        <div class="receipt-subtitle">
+                            ${issuerId}
+                            ${issuerContact}
+                            ${issuerEmail}
+                            ${issuerAddress}
+                            <div>${t.generated}</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <span class="receipt-badge ${typeData.badgeClass}">${typeData.movimientoTexto}</span>
+                        <div style="font-size:0.8rem; color:#777; margin-top:8px;">
+                            Nº ${receiptNumber}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="receipt-panel">
+                <div class="receipt-row">
+                    <span class="receipt-label">${t.date}:</span>
+                    <span class="receipt-value">${item.date}</span>
+                </div>
+
+                <div class="receipt-row" style="margin-bottom:0;">
+                    <span class="receipt-label">${t.type}:</span>
+                    <span class="receipt-value bold">${typeData.tipoTexto}</span>
+                </div>
+            </div>
+
+            <div class="receipt-row">
+                <span class="receipt-label">${t.client}:</span>
+                <span class="receipt-value bold">${item.ter}</span>
+            </div>
+
+            <div class="receipt-row">
+                <span class="receipt-label">${t.taxId}:</span>
+                <span class="receipt-value">${item.nit || 'N/A'}</span>
+            </div>
+
+            <div class="receipt-row">
+                <span class="receipt-label">${t.detail}:</span>
+                <span class="receipt-value">${item.desc}</span>
+            </div>
+
+            <div class="receipt-dash-line"></div>
+
+            <div class="receipt-total-row">
+                <span class="receipt-total-label">${t.amount}:</span>
+                <span class="receipt-total-value">
+                    ${formatMoney(item.amt)}
+                    <small style="font-size:0.8rem; color:#666;">${currentCurrency}</small>
+                </span>
+            </div>
+
+            <div style="margin-top:35px; padding-top:20px; border-top:1px solid #eee;">
+                <p class="receipt-note">
+                    ${t.internalSupport}
+                </p>
+
+                <div class="receipt-signatures">
+                    <div class="receipt-signature">
+                        ${t.signatureReceived}
+                    </div>
+
+                    <div class="receipt-signature">
+                        ${t.signatureResponsible}
+                    </div>
+                </div>
+            </div>
+
+            <div class="receipt-footer">
+                © 2026 FINANZAS JL · ${t.digitalReceipt}
+            </div>
+        `;
+
         const styles = document.querySelector('style').innerHTML;
 
         const printWindow = window.open('', '_blank', 'width=900,height=700');
@@ -2319,6 +2507,7 @@
 
     applyLang();
     updateUI();
+    loadProfileForm();
 </script>
 
 </body>
