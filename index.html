@@ -261,7 +261,7 @@
             background: rgba(0,0,0,0.45);
             z-index: 12000;
             display: none;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
             padding: 18px;
         }
@@ -284,8 +284,36 @@
         .month-picker-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 22px;
+            gap: 28px;
+            margin: 26px auto 34px;
+            max-width: 300px;
+        }
+
+        .picker-wheel-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .picker-wheel-item {
+            border: none;
+            background: transparent;
+            width: 100%;
+            min-height: 36px;
+            font-size: 1.15rem;
+            color: #9b9b9b;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .picker-wheel-item.active {
+            color: #111;
+            font-weight: 500;
+            font-size: 1.2rem;
+            border-top: 3px solid #555;
+            border-bottom: 3px solid #555;
+            padding: 10px 0;
         }
 
         .month-picker-actions {
@@ -732,6 +760,13 @@
         </div>
     </div>
 
+    <div class="card" style="margin-top: 4px;">
+        <div class="form-group" style="margin-bottom:0;">
+            <label id="lbl-excel-print-date">Mes de impresión del Excel</label>
+            <input type="month" id="excel-print-date" onchange="saveExcelPrintDate()">
+        </div>
+    </div>
+
     <button id="txt-btn-excel" onclick="exportarExcelFinal()" class="btn btn-excel">
         📊 Descargar Reporte Profesional
     </button>
@@ -799,6 +834,7 @@
 
 <!-- VISTA RECIBO -->
 <div id="scr-rec" class="screen">
+    <div id="receipt-selector-card"></div>
     <div class="receipt-box" id="rec-box"></div>
 
     <button id="txt-btn-print" onclick="descargarReciboPDF()" class="btn" style="background:var(--accent)">
@@ -812,8 +848,20 @@
     <div class="month-picker-card" onclick="event.stopPropagation()">
         <div class="month-picker-title" id="month-picker-title">Establecer mes</div>
         <div class="month-picker-controls">
-            <select id="month-picker-month"></select>
-            <select id="month-picker-year"></select>
+            <input type="hidden" id="month-picker-month">
+            <input type="hidden" id="month-picker-year">
+
+            <div class="picker-wheel-column">
+                <button type="button" class="picker-wheel-item" id="picker-prev-month" onclick="shiftPickerMonth(-1)"></button>
+                <button type="button" class="picker-wheel-item active" id="picker-current-month" onclick="shiftPickerMonth(1)"></button>
+                <button type="button" class="picker-wheel-item" id="picker-next-month" onclick="shiftPickerMonth(1)"></button>
+            </div>
+
+            <div class="picker-wheel-column">
+                <button type="button" class="picker-wheel-item" id="picker-prev-year" onclick="shiftPickerYear(-1)"></button>
+                <button type="button" class="picker-wheel-item active" id="picker-current-year" onclick="shiftPickerYear(1)"></button>
+                <button type="button" class="picker-wheel-item" id="picker-next-year" onclick="shiftPickerYear(1)"></button>
+            </div>
         </div>
         <div class="month-picker-actions">
             <button type="button" class="month-picker-action" onclick="hideMonthPicker()">Cancelar</button>
@@ -847,6 +895,7 @@
     let db = JSON.parse(localStorage.getItem('freddy_db_v11')) || [];
     let currentLang = localStorage.getItem('app_lang') || 'es';
     let currentCurrency = localStorage.getItem('app_currency') || 'COP';
+    let selectedReceiptIndex = Number(localStorage.getItem('selected_receipt_index'));
 
     const currencyConfigs = {
         COP: { locale: 'es-CO', symbol: '$', name: 'COP' },
@@ -854,6 +903,44 @@
         EUR: { locale: 'de-DE', symbol: '€', name: 'EUR' },
         MXN: { locale: 'es-MX', symbol: '$', name: 'MXN' }
     };
+
+    function getReceiptSequenceValue(receiptNumber) {
+        const match = String(receiptNumber || '').match(/REC-\d{4}-(\d{6})/);
+        return match ? Number(match[1]) : 0;
+    }
+
+    function getCurrentReceiptMaxSequence() {
+        const storedSequence = Number(localStorage.getItem('receipt_sequence_v1')) || 0;
+        const dbSequence = db.reduce((max, item) => Math.max(max, getReceiptSequenceValue(item.receiptNumber)), 0);
+        return Math.max(storedSequence, dbSequence);
+    }
+
+    function generateReceiptNumber(dateValue) {
+        const date = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : new Date();
+        const nextSequence = getCurrentReceiptMaxSequence() + 1;
+        localStorage.setItem('receipt_sequence_v1', String(nextSequence));
+        return `REC-${date.getFullYear()}-${String(nextSequence).padStart(6, '0')}`;
+    }
+
+    function ensureReceiptNumbers() {
+        let changed = false;
+        let sequence = getCurrentReceiptMaxSequence();
+
+        db.forEach(item => {
+            if (!item.receiptNumber) {
+                sequence += 1;
+                const entryDate = parseEntryDate(item);
+                item.receiptNumber = `REC-${entryDate.getFullYear()}-${String(sequence).padStart(6, '0')}`;
+                changed = true;
+            }
+        });
+
+        localStorage.setItem('receipt_sequence_v1', String(sequence));
+
+        if (changed) {
+            localStorage.setItem('freddy_db_v11', JSON.stringify(db));
+        }
+    }
 
     const translations = {
         es: {
@@ -883,6 +970,9 @@
             hist: "Historial",
             rec: "Recibo",
             share: "📄 Descargar recibo en PDF",
+            receiptChoose: "Selecciona movimiento para recibo",
+            receiptView: "📄 Recibo",
+            receiptDefaultText: "Elige un registro para generar o imprimir su recibo.",
             empty: "Sin datos.",
             date: "FECHA",
             client: "TERCERO / CLIENTE",
@@ -903,7 +993,8 @@
             debtUpName: "Deuda aumentada",
             debtDownName: "Deuda disminuida",
             reportTitle: "REPORTE GERENCIAL",
-            generatedReport: "Reporte generado",
+            generatedReport: "Fecha de impresión",
+            excelPrintDate: "Mes de impresión del Excel",
             workingCurrency: "Moneda de trabajo",
             movementDetail: "DETALLE DE MOVIMIENTOS",
             currency: "MONEDA",
@@ -952,6 +1043,9 @@
             hist: "History",
             rec: "Receipt",
             share: "📄 Download PDF Receipt",
+            receiptChoose: "Select transaction for receipt",
+            receiptView: "📄 Receipt",
+            receiptDefaultText: "Choose a record to generate or print its receipt.",
             empty: "No data.",
             date: "DATE",
             client: "CLIENT / THIRD PARTY",
@@ -972,7 +1066,8 @@
             debtUpName: "Debt increased",
             debtDownName: "Debt decreased",
             reportTitle: "MANAGEMENT REPORT",
-            generatedReport: "Generated report",
+            generatedReport: "Print date",
+            excelPrintDate: "Excel print month",
             workingCurrency: "Working currency",
             movementDetail: "TRANSACTION DETAILS",
             currency: "CURRENCY",
@@ -1004,6 +1099,56 @@
         })}`;
     }
 
+    function getCurrentInputMonth() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    }
+
+    function normalizeExcelMonth(value) {
+        if (!value) {
+            return getCurrentInputMonth();
+        }
+        // Si venía guardada una fecha completa anterior, ejemplo 2026-05-17,
+        // se convierte automáticamente a mes, ejemplo 2026-05.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return value.slice(0, 7);
+        }
+        if (/^\d{4}-\d{2}$/.test(value)) {
+            return value;
+        }
+        return getCurrentInputMonth();
+    }
+
+    function initExcelPrintDate() {
+        const input = document.getElementById('excel-print-date');
+        if (!input) {
+            return;
+        }
+        const savedMonth = normalizeExcelMonth(
+            localStorage.getItem('excel_print_month') || localStorage.getItem('excel_print_date')
+        );
+        input.value = savedMonth;
+        localStorage.setItem('excel_print_month', savedMonth);
+    }
+
+    function saveExcelPrintDate() {
+        const input = document.getElementById('excel-print-date');
+        if (input && input.value) {
+            localStorage.setItem('excel_print_month', normalizeExcelMonth(input.value));
+        }
+    }
+
+    function formatReportDate(monthValue) {
+        const safeValue = normalizeExcelMonth(monthValue);
+        const date = new Date(`${safeValue}-01T00:00:00`);
+        const locale = currentLang === 'es' ? 'es-CO' : 'en-US';
+        return isNaN(date.getTime())
+            ? new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+            : date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    }
+
     function changeCurrency() {
         currentCurrency = document.getElementById('currency-select').value;
         localStorage.setItem('app_currency', currentCurrency);
@@ -1011,7 +1156,7 @@
         renderHist();
 
         if (document.getElementById('scr-rec').classList.contains('active')) {
-            renderLastReceipt();
+            renderReceiptScreen();
         }
     }
 
@@ -1026,6 +1171,7 @@
         document.getElementById('txt-kpi-deu').innerText = t.deu;
         document.getElementById('txt-kpi-net').innerText = t.net;
         document.getElementById('txt-btn-excel').innerText = t.excel;
+        document.getElementById('lbl-excel-print-date').innerText = t.excelPrintDate;
         document.getElementById('lbl-ter').innerText = t.ter;
         document.getElementById('lbl-nit').innerText = t.nit;
         document.getElementById('lbl-des').innerText = t.des;
@@ -1056,7 +1202,7 @@
         applyLang();
 
         if (document.getElementById('scr-rec').classList.contains('active')) {
-            renderLastReceipt();
+            renderReceiptScreen();
         }
     }
 
@@ -1095,7 +1241,7 @@
         }
 
         if (id === 'scr-rec') {
-            renderLastReceipt();
+            renderReceiptScreen();
         }
 
         updateUI();
@@ -1113,7 +1259,10 @@
             afectarSaldo: document.getElementById('chk-afectar-saldo').checked,
             sumarIngreso: document.getElementById('chk-sumar-ingreso').checked,
             date: idx === "-1" ? new Date().toLocaleString() : db[idx].date,
-            monthKey: idx === "-1" ? getMonthKeyFromDate(new Date()) : (db[idx].monthKey || getMonthKeyFromEntry(db[idx]))
+            monthKey: idx === "-1" ? getMonthKeyFromDate(new Date()) : (db[idx].monthKey || getMonthKeyFromEntry(db[idx])),
+            receiptNumber: idx === "-1"
+                ? generateReceiptNumber(new Date())
+                : (db[idx].receiptNumber || generateReceiptNumber(parseEntryDate(db[idx])))
         };
 
         if (!entry.ter || isNaN(entry.amt)) {
@@ -1122,6 +1271,8 @@
 
         if (idx === "-1") {
             db.push(entry);
+            selectedReceiptIndex = db.length - 1;
+            localStorage.setItem('selected_receipt_index', selectedReceiptIndex);
         } else {
             db[idx] = entry;
         }
@@ -1329,6 +1480,7 @@
 
 
     let monthPickerState = { targetId: null, currentValue: null };
+    let monthPickerView = { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
 
     function getMonthNamesForPicker() {
         if (currentLang === 'en') {
@@ -1337,35 +1489,64 @@
         return ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     }
 
+    function wrapMonth(value) {
+        if (value < 1) return 12;
+        if (value > 12) return 1;
+        return value;
+    }
+
+    function renderMonthPickerWheel() {
+        const monthNames = getMonthNamesForPicker();
+        const monthInput = document.getElementById('month-picker-month');
+        const yearInput = document.getElementById('month-picker-year');
+
+        if (monthInput) monthInput.value = monthPickerView.month;
+        if (yearInput) yearInput.value = monthPickerView.year;
+
+        const prevMonth = wrapMonth(monthPickerView.month - 1);
+        const nextMonth = wrapMonth(monthPickerView.month + 1);
+
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
+        setText('picker-prev-month', monthNames[prevMonth - 1]);
+        setText('picker-current-month', monthNames[monthPickerView.month - 1]);
+        setText('picker-next-month', monthNames[nextMonth - 1]);
+
+        setText('picker-prev-year', monthPickerView.year - 1);
+        setText('picker-current-year', monthPickerView.year);
+        setText('picker-next-year', monthPickerView.year + 1);
+    }
+
+    function shiftPickerMonth(delta) {
+        monthPickerView.month = wrapMonth(monthPickerView.month + delta);
+        renderMonthPickerWheel();
+    }
+
+    function shiftPickerYear(delta) {
+        monthPickerView.year += delta;
+        renderMonthPickerWheel();
+    }
+
     function openMonthPicker(targetId, currentValue) {
         const overlay = document.getElementById('month-picker-overlay');
-        const monthSelect = document.getElementById('month-picker-month');
-        const yearSelect = document.getElementById('month-picker-year');
+        const monthInput = document.getElementById('month-picker-month');
+        const yearInput = document.getElementById('month-picker-year');
         const title = document.getElementById('month-picker-title');
 
-        if (!overlay || !monthSelect || !yearSelect) {
+        if (!overlay || !monthInput || !yearInput) {
             return;
         }
 
         const safeValue = currentValue || getMonthKeyFromDate(new Date());
         const [year, month] = safeValue.split('-').map(Number);
         monthPickerState = { targetId, currentValue: safeValue };
+        monthPickerView = { month: month || (new Date().getMonth() + 1), year: year || new Date().getFullYear() };
 
         title.innerText = currentLang === 'es' ? 'Establecer mes' : 'Set month';
-
-        const monthNames = getMonthNamesForPicker();
-        monthSelect.innerHTML = monthNames.map((name, index) => {
-            const value = index + 1;
-            return `<option value="${value}" ${value === month ? 'selected' : ''}>${name}</option>`;
-        }).join('');
-
-        const currentYear = new Date().getFullYear();
-        const years = new Set([currentYear - 1, currentYear, currentYear + 1, year]);
-        getAvailableYears().forEach(y => years.add(y));
-
-        yearSelect.innerHTML = [...years].sort((a, b) => a - b).map(y => {
-            return `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`;
-        }).join('');
+        renderMonthPickerWheel();
 
         overlay.style.display = 'flex';
     }
@@ -1479,12 +1660,18 @@
             return;
         }
 
-        const copied = recordsToCopy.map(item => ({
-            ...item,
-            date: buildDateForCopiedEntry(item, targetMonth),
-            monthKey: targetMonth,
-            copiedFromMonth: sourceMonth
-        }));
+        const copied = recordsToCopy.map(item => {
+            const copiedDate = buildDateForCopiedEntry(item, targetMonth);
+            const tempEntry = { ...item, date: copiedDate, monthKey: targetMonth };
+
+            return {
+                ...item,
+                date: copiedDate,
+                monthKey: targetMonth,
+                copiedFromMonth: sourceMonth,
+                receiptNumber: generateReceiptNumber(parseEntryDate(tempEntry))
+            };
+        });
 
         db = db.concat(copied);
         localStorage.setItem('freddy_db_v11', JSON.stringify(db));
@@ -1608,6 +1795,7 @@
                             <small style="color:#666;">${d.desc || ''}</small><br>
                             <button class="btn-edit" onclick="editItem(${originalIndex})">✏️</button>
                             <button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button>
+                            <button class="btn-edit" onclick="viewReceipt(${originalIndex})" title="${t.receiptView}">📄</button>
                         </div>
                     </div>
                 `;
@@ -1638,42 +1826,100 @@
     function deleteItem(index) {
         if (confirm(currentLang === 'es' ? "¿Eliminar registro?" : "Delete record?")) {
             db.splice(index, 1);
+
+            if (selectedReceiptIndex >= db.length) {
+                selectedReceiptIndex = db.length ? db.length - 1 : 0;
+                localStorage.setItem('selected_receipt_index', selectedReceiptIndex);
+            }
+
             localStorage.setItem('freddy_db_v11', JSON.stringify(db));
             renderHist();
             updateUI();
+
+            if (document.getElementById('scr-rec').classList.contains('active')) {
+                renderReceiptScreen();
+            }
         }
     }
 
-    function renderLastReceipt() {
-        const box = document.getElementById('rec-box');
+    function getReceiptTypeData(type) {
+        const t = translations[currentLang];
+
+        if (type === 'out') {
+            return { tipoTexto: t.optOut, badgeClass: "badge-out", movimientoTexto: t.expenseName };
+        }
+
+        if (type === 'deu_up') {
+            return { tipoTexto: t.optDeuUp, badgeClass: "badge-deu", movimientoTexto: t.debtUpName };
+        }
+
+        if (type === 'deu_down') {
+            return { tipoTexto: t.optDeuDown, badgeClass: "badge-deu", movimientoTexto: t.debtDownName };
+        }
+
+        return { tipoTexto: t.optIn, badgeClass: "badge-in", movimientoTexto: t.incomeName };
+    }
+
+    function getReceiptOptionLabel(item, index) {
+        const cleanDesc = item.desc || '';
+        const shortDesc = cleanDesc.length > 24 ? cleanDesc.slice(0, 24) + '...' : cleanDesc;
+        return `${item.receiptNumber || ('REC-' + String(index + 1).padStart(5, "0"))} · ${item.date} · ${item.ter} · ${shortDesc} · ${formatMoney(item.amt)}`;
+    }
+
+    function ensureSelectedReceiptIndex() {
+        if (!db.length) {
+            selectedReceiptIndex = 0;
+            return;
+        }
+
+        if (Number.isNaN(selectedReceiptIndex) || selectedReceiptIndex < 0 || selectedReceiptIndex >= db.length) {
+            selectedReceiptIndex = db.length - 1;
+        }
+
+        localStorage.setItem('selected_receipt_index', selectedReceiptIndex);
+    }
+
+    function setSelectedReceiptIndex(value) {
+        selectedReceiptIndex = Number(value);
+        ensureSelectedReceiptIndex();
+        renderReceiptByIndex(selectedReceiptIndex);
+    }
+
+    function viewReceipt(index) {
+        selectedReceiptIndex = Number(index);
+        ensureSelectedReceiptIndex();
+        const receiptNav = document.querySelectorAll('.bottom-nav .nav-item')[3];
+        nav('scr-rec', receiptNav);
+    }
+
+    function renderReceiptScreen() {
+        const card = document.getElementById('receipt-selector-card');
+
+        if (card) {
+            card.innerHTML = '';
+        }
 
         if (!db.length) {
+            renderReceiptByIndex(-1);
+            return;
+        }
+
+        ensureSelectedReceiptIndex();
+        renderReceiptByIndex(selectedReceiptIndex);
+    }
+
+    function renderReceiptByIndex(index) {
+        const box = document.getElementById('rec-box');
+
+        if (!db.length || index < 0 || index >= db.length) {
             box.innerHTML = `<p style='text-align:center; color:#888;'>${translations[currentLang].empty}</p>`;
             return;
         }
 
-        const last = db[db.length - 1];
+        const last = db[index];
         const t = translations[currentLang];
-
-        let tipoTexto = t.optIn;
-        let badgeClass = "badge-in";
-        let movimientoTexto = t.incomeName;
-
-        if (last.type === 'out') {
-            tipoTexto = t.optOut;
-            badgeClass = "badge-out";
-            movimientoTexto = t.expenseName;
-        } else if (last.type === 'deu_up') {
-            tipoTexto = t.optDeuUp;
-            badgeClass = "badge-deu";
-            movimientoTexto = t.debtUpName;
-        } else if (last.type === 'deu_down') {
-            tipoTexto = t.optDeuDown;
-            badgeClass = "badge-deu";
-            movimientoTexto = t.debtDownName;
-        }
-
-        const receiptNumber = "REC-" + String(db.length).padStart(5, "0");
+        const typeData = getReceiptTypeData(last.type);
+        const receiptNumber = last.receiptNumber || ("REC-" + String(index + 1).padStart(5, "0"));
 
         box.innerHTML = `
             <div style="border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 22px;">
@@ -1684,7 +1930,7 @@
                     </div>
 
                     <div style="text-align:right;">
-                        <span class="receipt-badge ${badgeClass}">${movimientoTexto}</span>
+                        <span class="receipt-badge ${typeData.badgeClass}">${typeData.movimientoTexto}</span>
                         <div style="font-size:0.8rem; color:#777; margin-top:8px;">
                             Nº ${receiptNumber}
                         </div>
@@ -1700,7 +1946,7 @@
 
                 <div class="receipt-row" style="margin-bottom:0;">
                     <span class="receipt-label">${t.type}:</span>
-                    <span class="receipt-value bold">${tipoTexto}</span>
+                    <span class="receipt-value bold">${typeData.tipoTexto}</span>
                 </div>
             </div>
 
@@ -1762,6 +2008,9 @@
 
         const t = translations[currentLang];
         const conf = currencyConfigs[currentCurrency];
+        const excelPrintDate = normalizeExcelMonth(document.getElementById('excel-print-date')?.value);
+        localStorage.setItem('excel_print_month', excelPrintDate);
+        const excelPrintDateLabel = formatReportDate(excelPrintDate);
 
         let totalIngresos = 0;
         let totalGastos = 0;
@@ -1819,7 +2068,7 @@
                             text-align:center;
                             border:1px solid #B7D7EF;">
                             ${t.workingCurrency}: <b>${conf.name}</b> |
-                            ${t.generatedReport}: <b>${new Date().toLocaleString()}</b>
+                            ${t.generatedReport}: <b>${excelPrintDateLabel}</b>
                         </td>
                     </tr>
 
@@ -1970,7 +2219,7 @@
         const a = document.createElement('a');
 
         a.href = url;
-        a.download = `MiFinanzasPro_Reporte_${conf.name}_${new Date().toISOString().slice(0,10)}.xls`;
+        a.download = `FINANZAS_JL_Reporte_${conf.name}_${excelPrintDate}.xls`;
 
         document.body.appendChild(a);
         a.click();
@@ -1985,7 +2234,8 @@
             return;
         }
 
-        renderLastReceipt();
+        ensureSelectedReceiptIndex();
+        renderReceiptByIndex(selectedReceiptIndex);
 
         const receiptContent = document.getElementById('rec-box').innerHTML;
         const styles = document.querySelector('style').innerHTML;
@@ -2058,7 +2308,10 @@
         printWindow.document.close();
     }
 
+    ensureReceiptNumbers();
+
     document.getElementById('currency-select').value = currentCurrency;
+    initExcelPrintDate();
 
     if (localStorage.getItem('app_act_v11') === 'true') {
         document.getElementById('lock-screen').style.display = 'none';
